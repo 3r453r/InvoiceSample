@@ -1,0 +1,6 @@
+@InvoiceSample.WebApi_HostAddress = http://localhost:5130
+
+GET {{InvoiceSample.WebApi_HostAddress}}/invoices/
+Accept: application/json
+
+###
