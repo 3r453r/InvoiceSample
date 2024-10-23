@@ -1,6 +1,7 @@
 ﻿using InvoiceSample.Domain;
 using InvoiceSample.Domain.InvoiceAggregate;
 using InvoiceSample.Domain.SalesOrderAggregate;
+using InvoiceSample.Persistence.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -39,5 +40,32 @@ namespace InvoiceSample.Persistence.Tables
         public required string Number { get; set; }
 
         public Guid CustomerId { get; set; }
+
+        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
+        {
+            if (entityData is IInvoiceData invoiceData)
+            {
+                SalesOrders.UpdateCollection(
+                    invoiceData.SalesOrders
+                    , dbContext
+                    , SalesOrder.CreateFromData
+                    , (e, ed) => e.UpdateFromData(ed)
+                    , so => so.Number
+                    , sod => sod.Number
+                    );
+
+                Lines.UpdateCollection(
+                    invoiceData.Lines
+                    , dbContext
+                    , l => InvoiceLine.CreateFromData(l, this)
+                    , (e, ed) => e.UpdateFromData(ed, this)
+                    , l => l.Ordinal
+                    , ld => ld.Ordinal);
+            }
+            else
+            {
+                throw new ArgumentException("invalid entity data type");
+            }
+        }
     }
 }

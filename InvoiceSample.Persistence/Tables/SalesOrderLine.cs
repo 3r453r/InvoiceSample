@@ -37,5 +37,10 @@ namespace InvoiceSample.Persistence.Tables
 
         public bool IsEqual(ISalesOrderLine? other) => other is not null &&
             SalesOrder.Number == other.SalesOrder.Number && Ordinal == other.Ordinal;
+
+        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

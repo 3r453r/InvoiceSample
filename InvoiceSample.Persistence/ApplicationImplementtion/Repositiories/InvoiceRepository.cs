@@ -31,7 +31,7 @@ namespace InvoiceSample.Persistence.ApplicationImplementtion.Repositiories
 
             AddOrUpdateSalesOrders(invoice, entity.SalesOrders);
             AddOrUpdateInvoiceLines(invoice, entity.Lines);
-            AddOrUpdateVatSums(invoice.VatSums, entity.VatSums);
+            AddOrUpdateVatSums(invoice.VatSums, entity.VatSums, invoice);
 
             await _dbContext.Invoices.AddAsync(invoice);
         }
@@ -51,7 +51,7 @@ namespace InvoiceSample.Persistence.ApplicationImplementtion.Repositiories
 
             AddOrUpdateSalesOrders(invoice, entity.SalesOrders);
             AddOrUpdateInvoiceLines(invoice, entity.Lines);
-            AddOrUpdateVatSums(invoice.VatSums, entity.VatSums);
+            AddOrUpdateVatSums(invoice.VatSums, entity.VatSums, invoice);
         }
 
         public async Task Delete(IInvoiceData entity)
@@ -99,9 +99,31 @@ namespace InvoiceSample.Persistence.ApplicationImplementtion.Repositiories
                 && invoicedStates.Contains(i.State));
         }
 
-        private void AddOrUpdateVatSums(List<InvoiceVatSum> vatSums, IEnumerable<IVatSum> vatSumsData)
+        private void AddOrUpdateVatSums(List<InvoiceVatSum> vatSums, IEnumerable<IVatSum> vatSumsData, InvoiceTable invoice)
         {
-            //TODO implement
+            foreach(var vatSumData in vatSumsData)
+            {
+                var vatSum = vatSums.FirstOrDefault(s => s.VatRate == vatSumData.VatRate);
+                if (vatSum == null) 
+                {
+                    vatSum = new InvoiceVatSum
+                    {
+                        Invoice = invoice,
+                        VatRate = vatSumData.VatRate,
+                        GrossValue = vatSumData.GrossValue,
+                        NetValue = vatSumData.NetValue,
+                        VatValue = vatSumData.VatValue,
+                    };
+
+                    vatSums.Add(vatSum);
+                }
+                else
+                {
+                    vatSum.GrossValue = vatSumData.GrossValue;
+                    vatSum.NetValue = vatSumData.NetValue;
+                    vatSum.VatValue = vatSumData.VatValue;
+                }
+            }
         }
 
         private void AddOrUpdateInvoiceLines(InvoiceTable invoice, IEnumerable<IInvoiceLine> lines)

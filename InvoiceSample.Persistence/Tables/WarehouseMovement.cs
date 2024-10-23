@@ -1,5 +1,6 @@
 ﻿using InvoiceSample.Domain;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -24,6 +25,10 @@ namespace InvoiceSample.Persistence.Tables
         public Guid CustomerId { get; set; }
 
         public WarehouseMovementType Type { get; set; }
+
+        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
+        {
+        }
     }
 
     public enum WarehouseMovementType : byte

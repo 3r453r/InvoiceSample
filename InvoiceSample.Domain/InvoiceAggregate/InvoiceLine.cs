@@ -1,4 +1,5 @@
-﻿using InvoiceSample.Domain.SalesOrderAggregate;
+﻿using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using System;
 using System.Collections.Generic;
@@ -33,5 +34,14 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 
         public SalesOrderLine? SalesOrderLine { get; set; }
         ISalesOrderLine? IInvoiceLine.SalesOrderLine => SalesOrderLine;
+
+        public void UpdateCollections(IInvoiceLine entityData, Invoice invoice)
+        {
+        }
+
+        public void UpdateEntity(IInvoiceLine entityData, Invoice invoice)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

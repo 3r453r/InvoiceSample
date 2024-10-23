@@ -1,6 +1,7 @@
 ﻿using InvoiceSample.Domain;
 using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -29,5 +30,28 @@ namespace InvoiceSample.Persistence.Tables
         IEnumerable<IWarehouseReleaseData> ISalesOrderData.WarehouseReleases => WarehouseReleases;
 
         public List<Invoice> Invoices { get; set; } = [];
+
+        public static SalesOrder CreateFromData(ISalesOrderData data)
+        {
+            return new SalesOrder
+            {
+                Number = data.Number,
+                AutoInvoice = data.AutoInvoice,
+                CustomerId = data.CustomerId,
+                ServiceLinesInvoiced = data.ServiceLinesInvoiced,
+            };
+        }
+
+        public void UpdateFromData(ISalesOrderData data)
+        {
+            Number = data.Number;
+            AutoInvoice = data.AutoInvoice;
+            CustomerId = data.CustomerId;
+            ServiceLinesInvoiced = data.ServiceLinesInvoiced;
+        }
+
+        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
+        {
+        }
     }
 }

@@ -23,5 +23,9 @@ namespace InvoiceSample.Persistence.Tables
 
         [Precision(18, 2)]
         public decimal VatValue { get; set; }
+
+        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
+        {
+        }
     }
 }

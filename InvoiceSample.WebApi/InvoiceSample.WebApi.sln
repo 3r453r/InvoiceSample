@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35222.181
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceSample.WebApi", "InvoiceSample.WebApi.csproj", "{2D3CEB7D-3BFD-4445-9D77-1E74E05F711B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceSample.WebApi", "InvoiceSample.WebApi.csproj", "{2D3CEB7D-3BFD-4445-9D77-1E74E05F711B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceSample.Domain", "..\InvoiceSample.Domain\InvoiceSample.Domain.csproj", "{7EF466A7-22EC-49CD-8738-C21EB0ED1A5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceSample.Domain", "..\InvoiceSample.Domain\InvoiceSample.Domain.csproj", "{7EF466A7-22EC-49CD-8738-C21EB0ED1A5C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceSample.Application", "..\InvoiceSample.Application\InvoiceSample.Application.csproj", "{5E0A5C70-8530-4423-B572-D6B319542CBE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceSample.Application", "..\InvoiceSample.Application\InvoiceSample.Application.csproj", "{5E0A5C70-8530-4423-B572-D6B319542CBE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceSample.Persistence", "..\InvoiceSample.Persistence\InvoiceSample.Persistence.csproj", "{15F3D65A-0454-4556-9A89-558A9D97EE77}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceSample.Persistence", "..\InvoiceSample.Persistence\InvoiceSample.Persistence.csproj", "{15F3D65A-0454-4556-9A89-558A9D97EE77}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceSample.DataDrivenEntity", "..\InvoiceSample.Abstractions\InvoiceSample.DataDrivenEntity.csproj", "{485BC7C7-6601-433B-9032-4018B77CFCBA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{15F3D65A-0454-4556-9A89-558A9D97EE77}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15F3D65A-0454-4556-9A89-558A9D97EE77}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15F3D65A-0454-4556-9A89-558A9D97EE77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{485BC7C7-6601-433B-9032-4018B77CFCBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{485BC7C7-6601-433B-9032-4018B77CFCBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{485BC7C7-6601-433B-9032-4018B77CFCBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{485BC7C7-6601-433B-9032-4018B77CFCBA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

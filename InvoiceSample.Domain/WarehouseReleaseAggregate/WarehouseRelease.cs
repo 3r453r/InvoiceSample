@@ -8,6 +8,8 @@ namespace InvoiceSample.Domain.WarehouseReleaseAggregate
 {
     public class WarehouseRelease : IWarehouseReleaseData
     {
+        public static WarehouseRelease Create(IWarehouseReleaseData warehouseReleaseData) => new WarehouseRelease(warehouseReleaseData);
+
         public WarehouseRelease(IWarehouseReleaseData warehouseReleaseData)
         {
             Number = warehouseReleaseData.Number;
@@ -37,6 +39,17 @@ namespace InvoiceSample.Domain.WarehouseReleaseAggregate
         public List<WarehouseReleaseLine> Lines { get; init; } = [];
         IEnumerable<IDocumentLine> IDocument.Lines => Lines;
         IEnumerable<IWarehouseReleaseLine> IWarehouseReleaseData.Lines => Lines;
+
+        public void UpdateCollections(IWarehouseReleaseData entityData)
+        {
+        }
+
+        public void UpdateEntity(IWarehouseReleaseData entityData)
+        {
+            Number = entityData.Number;
+            CustomerId = entityData.CustomerId;
+            SalesOrderNumber = entityData.SalesOrderNumber;
+        }
 
         internal void Update(IWarehouseReleaseData warehouseReleaseData)
         {

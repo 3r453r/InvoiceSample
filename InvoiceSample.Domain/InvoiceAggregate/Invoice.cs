@@ -19,6 +19,9 @@ namespace InvoiceSample.Domain.InvoiceAggregate
         {
             Number = invoiceData.Number;
             State = invoiceData.State;
+            NetValue = invoiceData.NetValue;
+            VatValue = invoiceData.VatValue;
+            GrossValue = invoiceData.GrossValue;
 
             foreach (var lineGroup in invoiceData.Lines.GroupBy(l => l.WarehouseReleaseLine?.Document.Number)) 
             { 
@@ -47,10 +50,6 @@ namespace InvoiceSample.Domain.InvoiceAggregate
                     SalesOrderLine = salesOrder.Lines.FirstOrDefault(l => l.Ordinal == dl.SalesOrderLine?.Ordinal),
                 }));
             }
-
-            NetValue = invoiceData.NetValue;
-            VatValue = invoiceData.VatValue;
-            GrossValue = invoiceData.GrossValue;
 
             _salesOrders.AddRange(invoiceData.SalesOrders.Select(so => new SalesOrder(so)));
         }
@@ -151,6 +150,41 @@ namespace InvoiceSample.Domain.InvoiceAggregate
             NetValue = _lines.Sum(l => l.NetValue);
             VatValue = _lines.Sum(l => l.VatValue);
             GrossValue = _lines.Sum(l => l.GrossValue);
+
+            UpdateVatSums();
+        }
+
+        protected void UpdateVatSums()
+        {
+            List<VatRate> existingVatRates = [];
+            foreach (var group in _lines.GroupBy(l => l.VatRate)) 
+            {
+                var vatSum = _vatSums.FirstOrDefault(vs => vs.VatRate == group.Key);
+                if (vatSum == null) 
+                {
+                    vatSum = new VatSum
+                    {
+                        VatRate = group.Key,
+                        GrossValue = group.Sum(l => l.GrossValue),
+                        NetValue = group.Sum(l => l.NetValue),
+                        VatValue = group.Sum(l => l.VatValue)
+                    };
+                    _vatSums.Add(vatSum);
+                }
+                else
+                {
+                    vatSum.NetValue = group.Sum(l => l.NetValue);
+                    vatSum.GrossValue = group.Sum(l => l.GrossValue);
+                    vatSum.VatValue = group.Sum(l => l.VatValue);
+                }
+
+                existingVatRates.Add(group.Key);
+            }
+
+            foreach(var vatSum in _vatSums.Where(vs => !existingVatRates.Contains(vs.VatRate)).ToArray())
+            {
+                _vatSums.Remove(vatSum);
+            }
         }
 
         protected void UpdateLine(InvoiceLine line, WarehouseReleaseLine newLine)
@@ -161,6 +195,20 @@ namespace InvoiceSample.Domain.InvoiceAggregate
             line.ProductId = newLine.ProductId;
             line.Quantity = newLine.Quantity;
             line.GrossValue = newLine.GrossValue;
+        }
+
+        public void UpdateCollections(IInvoiceData entityData)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UpdateEntity(IInvoiceData entityData)
+        {
+            Number = entityData.Number;
+            State = entityData.State;
+            NetValue = entityData.NetValue;
+            VatValue = entityData.VatValue;
+            GrossValue = entityData.GrossValue;
         }
     }
 }
