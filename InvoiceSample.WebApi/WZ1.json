@@ -1,0 +1,37 @@
+{
+  "salesOrderNumber": "SO1",
+  "lines": [
+    {
+      "salesOrderLineOrdinal": 2,
+      "ordinal": 1,
+      "netValue": 100,
+      "vatValue": 7,
+      "grossValue": 107,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa1",
+      "quantity": 1,
+      "vatRate": "Seven"
+    },
+    {
+      "salesOrderLineOrdinal": 3,
+      "ordinal": 2,
+      "netValue": 100,
+      "vatValue": 23,
+      "grossValue": 123,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa2",
+      "quantity": 1,
+      "vatRate": "TwentyThree"
+    },
+    {
+      "salesOrderLineOrdinal": 4,
+      "ordinal": 3,
+      "netValue": 100,
+      "vatValue": 23,
+      "grossValue": 123,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa3",
+      "quantity": 1,
+      "vatRate": "TwentyThree"
+    }
+  ],
+  "number": "SO1/WZ1",
+  "customerId": "3fa85f64-5717-4562-b3fc-2c963f66afa0"
+}

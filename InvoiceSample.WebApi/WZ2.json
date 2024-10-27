@@ -1,0 +1,27 @@
+{
+  "salesOrderNumber": "SO1",
+  "lines": [
+    {
+      "salesOrderLineOrdinal": 4,
+      "ordinal": 1,
+      "netValue": 100,
+      "vatValue": 23,
+      "grossValue": 123,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa3",
+      "quantity": 1,
+      "vatRate": "TwentyThree"
+    },
+    {
+      "salesOrderLineOrdinal": null,
+      "ordinal": 2,
+      "netValue": 100,
+      "vatValue": 0,
+      "grossValue": 100,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa4",
+      "quantity": 1,
+      "vatRate": "Zero"
+    }
+  ],
+  "number": "SO1/WZ2",
+  "customerId": "3fa85f64-5717-4562-b3fc-2c963f66afa0"
+}

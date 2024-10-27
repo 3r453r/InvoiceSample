@@ -1,0 +1,47 @@
+{
+  "autoInvoice": true,
+  "lines": [
+    {
+      "isService": true,
+      "ordinal": 1,
+      "netValue": 100,
+      "vatValue": 0,
+      "grossValue": 100,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa0",
+      "quantity": 1,
+      "vatRate": "Zero"
+    },
+    {
+      "isService": false,
+      "ordinal": 2,
+      "netValue": 100,
+      "vatValue": 7,
+      "grossValue": 107,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa1",
+      "quantity": 1,
+      "vatRate": "Seven"
+    },
+    {
+      "isService": false,
+      "ordinal": 3,
+      "netValue": 100,
+      "vatValue": 23,
+      "grossValue": 123,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa2",
+      "quantity": 1,
+      "vatRate": "TwentyThree"
+    },
+    {
+      "isService": false,
+      "ordinal": 4,
+      "netValue": 200,
+      "vatValue": 46,
+      "grossValue": 246,
+      "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa3",
+      "quantity": 2,
+      "vatRate": "TwentyThree"
+    }
+  ],
+  "number": "SO1",
+  "customerId": "3fa85f64-5717-4562-b3fc-2c963f66afa0"
+}
