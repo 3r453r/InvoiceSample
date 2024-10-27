@@ -16,6 +16,15 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WarehouseRelease", "WarehouseRelease", "{441B38B2-9A2E-4197-9774-54FC7D4079E3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SalesOrder", "SalesOrder", "{F42898EF-547A-4CB6-885A-C0A431E166B6}"
+	ProjectSection(SolutionItems) = preProject
+		SO1.json = SO1.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SO1", "SO1", "{F046F783-9230-4B4B-BE2F-DFAEB5499321}"
+	ProjectSection(SolutionItems) = preProject
+		WZ1.json = WZ1.json
+		WZ2.json = WZ2.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,6 +55,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{441B38B2-9A2E-4197-9774-54FC7D4079E3} = {6AD9ABD6-3AC1-4B69-96BF-AE1D2ACB7612}
 		{F42898EF-547A-4CB6-885A-C0A431E166B6} = {6AD9ABD6-3AC1-4B69-96BF-AE1D2ACB7612}
+		{F046F783-9230-4B4B-BE2F-DFAEB5499321} = {441B38B2-9A2E-4197-9774-54FC7D4079E3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {880B3770-4BCA-44EA-B27E-C72A56517470}
