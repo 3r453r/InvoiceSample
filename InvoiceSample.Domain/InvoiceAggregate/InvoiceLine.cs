@@ -1,5 +1,4 @@
-﻿using InvoiceSample.DataDrivenEntity;
-using InvoiceSample.Domain.SalesOrderAggregate;
+﻿using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using System;
 using System.Collections.Generic;

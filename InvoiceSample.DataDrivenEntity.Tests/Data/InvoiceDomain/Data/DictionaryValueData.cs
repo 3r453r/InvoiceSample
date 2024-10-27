@@ -16,8 +16,17 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public Guid GetKey() => Id;
 
         object IEntityData.GetKey() => Id;
-        public bool Equals(IDictionaryValueData? other) =>
-other is not null && Id == other.Id && Name == other.Name
-&& Created == other.Created && CreatedBy == other.CreatedBy;
+        public bool Equals(IDictionaryValueData? other) => other is not null && Id == other.Id;
+
+        public DictionaryValueData Copy()
+        {
+            return new DictionaryValueData
+            {
+                Id = this.Id,
+                Name = this.Name,
+                Created = this.Created,
+                CreatedBy = this.CreatedBy
+            };
+        }
     }
 }

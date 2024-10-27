@@ -1,32 +1,32 @@
-﻿using InvoiceSample.DataDrivenEntity.HasEntity;
-using InvoiceSample.DataDrivenEntity.HasEntityData;
-using InvoiceSample.DataDrivenEntity.Implementations.Basic;
+﻿using InvoiceSample.DataDrivenEntity.Implementations.Basic;
 using InvoiceSample.DataDrivenEntity.Tests.Data.TestEntities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
 {
-    using HasValues = IHasChildren<IDictionaryDefinitionData, Guid, DictionaryValue, Guid, IDictionaryValueData, DictionaryValue>;
-
-    public interface IDictionaryDefinitionData : IBaseEntityData, IHasEntityDataCollection<IDictionaryValueData, Guid>
+    public interface IDictionaryDefinitionData : IBaseEntityData
     {
         IEnumerable<IDictionaryValueData> Values { get; }
     }
 
-    public class DictionaryDefinition : ReflectiveSelfDataDataDrivenEntity<DictionaryDefinition, Guid, IDictionaryDefinitionData>
+    public class DictionaryDefinition : DataDrivenEntity<DictionaryDefinition, Guid, IDictionaryDefinitionData>
         , IDictionaryDefinitionData
-        , HasValues
     {
         private bool _initialized;
+
+        public DictionaryDefinition()
+        {
+            RegisterChildCollection<DictionaryValue, Guid, IDictionaryValueData, IDictionaryDefinitionData, Guid>(Values, pd => pd.Values, () => new DictionaryValue());
+        }
 
         public Guid Id { get; set; }
         public string Name { get; set; } = "";
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
         protected override bool SelfInitialzed => _initialized;
+
+        public List<DictionaryValue> Values { get; set; } = [];
+        IEnumerable<IDictionaryValueData> IDictionaryDefinitionData.Values => Values;
+
         object IEntityData.GetKey() => Id;
 
         public IEnumerable<IDictionaryValueData> GetChildrenEntityData(IDictionaryDefinitionData entityData)
@@ -43,15 +43,8 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
             _initialized = true;
         }
 
-        public List<DictionaryValue> Values { get; set; } = [];
-        IEnumerable<IDictionaryValueData> IDictionaryDefinitionData.Values => Values;
-        IEnumerable<IDictionaryValueData> IHasEntityDataCollection<IDictionaryValueData, Guid>.Children => Values;
-        ICollection<DictionaryValue> HasValues.ChildEntities => Values;
+        public override IDictionaryDefinitionData GetEntityData() => this;
 
-        public IEnumerable<(IEntityData? Entity, string Selector)> ChildrenData => [];
-
-        public IEnumerable<(IEnumerable<IEntityData> Collection, string Selector)> ChildrenCollectionsData => [(Values, nameof(Values))];
-
-
+        public override Guid GetKey() => Id;
     }
 }

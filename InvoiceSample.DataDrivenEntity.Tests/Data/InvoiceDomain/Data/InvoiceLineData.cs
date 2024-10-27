@@ -20,5 +20,16 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public bool Equals(IInvoiceLineData? other) =>
     other is not null && Id == other.Id && Name == other.Name
     && Created == other.Created && CreatedBy == other.CreatedBy;
+
+        public InvoiceLineData Copy()
+        {
+            return new InvoiceLineData
+            {
+                Id = this.Id,
+                Name = this.Name,
+                Created = this.Created,
+                CreatedBy = this.CreatedBy
+            };
+        }
     }
 }

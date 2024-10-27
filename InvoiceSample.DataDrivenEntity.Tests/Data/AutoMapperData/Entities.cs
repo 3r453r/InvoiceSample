@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
 {
-    public interface IParentData : IBaseEntityData, IAggregateEntityData
+    public interface IParentData : IBaseEntityData
     {
-        IBaseEntityData? DataDrivenChild { get; }
-        IEnumerable<IBaseEntityData> DataDrivenChildren { get; }
+        IDataDrivenChildData? DataDrivenChild { get; }
+        IEnumerable<IDataDrivenChildData> DataDrivenChildren { get; }
 
         IBaseEntityData? Child { get; }
         IEnumerable<IBaseEntityData> Children { get; }
     }
 
-    public class Parent : ReflectiveSelfDataDataDrivenEntity<Parent, Guid, IParentData>, IParentData
+    public class Parent : DataDrivenEntity<Parent, Guid, IParentData>, IParentData
     {
         private readonly IMapper? _mapper;
         private bool _selfInitialized;
@@ -42,19 +42,19 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
 
-        public IEnumerable<(IEntityData? Entity, string Selector)> ChildrenData => [];
-
-        public IEnumerable<(IEnumerable<IEntityData> Collection, string Selector)> ChildrenCollectionsData => [];
-
         protected override bool SelfInitialzed => _selfInitialized;
+
+        IDataDrivenChildData? IParentData.DataDrivenChild => DataDrivenChild;
+
+        IEnumerable<IDataDrivenChildData> IParentData.DataDrivenChildren => DataDrivenChildren;
 
         IBaseEntityData? IParentData.Child => Child;
 
         IEnumerable<IBaseEntityData> IParentData.Children => Children;
 
-        IBaseEntityData? IParentData.DataDrivenChild => DataDrivenChild;
+        public override IParentData GetEntityData() => this;
 
-        IEnumerable<IBaseEntityData> IParentData.DataDrivenChildren => DataDrivenChildren;
+        public override Guid GetKey() => Id;
 
         protected override void SelfInitialize(IParentData entityData)
         {
@@ -72,15 +72,15 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
         public ParentMappingProfile()
         {
             CreateMap<IParentData, Parent>()
-                .ForMember(d => d.ChildrenData, x => x.Ignore())
-                .ForMember(d => d.ChildrenCollectionsData, x => x.Ignore())
                 ;
             CreateMap<IBaseEntityData, Child>();
-            CreateMap<IBaseEntityData, DataDrivenChild>();
+            CreateMap<IDataDrivenChildData, DataDrivenChild>();
         }
     }
 
-    public class DataDrivenChild : ChildlessSelfDataDataDrivenEntity<DataDrivenChild, Guid, IBaseEntityData>, IBaseEntityData
+    public interface IDataDrivenChildData : IBaseEntityData
+    { }
+    public class DataDrivenChild : DataDrivenEntity<DataDrivenChild, Guid, IDataDrivenChildData>, IDataDrivenChildData
     {
         private bool _selfInitialized;
 
@@ -90,9 +90,11 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
         public int CreatedBy { get; set; }
         object IEntityData.GetKey() => Id;
 
-        protected override bool SelfInitialzed => _selfInitialized;
+        public override IDataDrivenChildData GetEntityData() => this;
 
-        protected override void SelfInitialize(IBaseEntityData entityData)
+        public override Guid GetKey() => Id;
+
+        protected override void SelfInitialize(IDataDrivenChildData entityData)
         {
             Id = entityData.Id;
             Name = entityData.Name;
@@ -100,6 +102,8 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
             CreatedBy = entityData.CreatedBy;
             _selfInitialized = true;
         }
+
+        protected override bool SelfInitialzed => _selfInitialized;
 
     }
 
@@ -116,14 +120,6 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
 
     public class ParentData : IParentData
     {
-        public IBaseEntityData DataDrivenChild => new BaseEntityData { Id = Guid.NewGuid(), Name = "a", CreatedBy = 1, Created = DateTime.Now};
-
-        public IEnumerable<IBaseEntityData> DataDrivenChildren => [new BaseEntityData { Id = Guid.NewGuid(), Name = "a", CreatedBy = 1, Created = DateTime.Now }];
-
-        public IBaseEntityData Child => new BaseEntityData { Id = Guid.NewGuid(), Name = "a", CreatedBy = 1, Created = DateTime.Now };
-
-        public IEnumerable<IBaseEntityData> Children => [new BaseEntityData { Id = Guid.NewGuid(), Name = "a", CreatedBy = 1, Created = DateTime.Now }];
-
         object IEntityData.GetKey() => Id;
         public Guid GetKey() => Id;
 
@@ -132,19 +128,17 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
 
-        public IEnumerable<(IEntityData? Entity, string Selector)> ChildrenData => [];
+        public Child? Child { get; set; }
+        public DataDrivenChild? DataDrivenChild { get; set; }
+        public List<DataDrivenChild> DataDrivenChildren { get; set; } = [];
+        public List<Child> Children { get; set; } = [];
 
-        public IEnumerable<(IEnumerable<IEntityData> Collection, string Selector)> ChildrenCollectionsData => [];
-    }
+        IDataDrivenChildData? IParentData.DataDrivenChild => DataDrivenChild;
 
-    public class BaseEntityData : IBaseEntityData
-    {
-        object IEntityData.GetKey() => Id;
-        public Guid GetKey() => Id;
+        IEnumerable<IDataDrivenChildData> IParentData.DataDrivenChildren => DataDrivenChildren;
 
-        public Guid Id { get; set; }
-        public string Name { get; set; } = "";
-        public DateTime Created { get; set; }
-        public int CreatedBy { get; set; }
+        IBaseEntityData? IParentData.Child => Child;
+
+        IEnumerable<IBaseEntityData> IParentData.Children => Children;
     }
 }

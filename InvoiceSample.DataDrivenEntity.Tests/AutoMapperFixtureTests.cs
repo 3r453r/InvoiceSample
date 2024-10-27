@@ -1,16 +1,6 @@
 ﻿using AutoMapper;
-using InvoiceSample.DataDrivenEntity.Aggregates;
-using InvoiceSample.DataDrivenEntity.Implementations;
-using InvoiceSample.DataDrivenEntity.Implementations.Basic;
-using InvoiceSample.DataDrivenEntity.Initializable;
 using InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData;
-using InvoiceSample.DataDrivenEntity.Tests.Data.TestEntities;
 using InvoiceSample.DataDrivenEntity.Tests.Fixtures.AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace InvoiceSample.DataDrivenEntity.Tests
 {
@@ -28,6 +18,10 @@ namespace InvoiceSample.DataDrivenEntity.Tests
         { 
             var parent = new Parent(_mapper);
             var data = new ParentData();
+            data.DataDrivenChildren = [new DataDrivenChild()];
+            data.Children = [new Child()];
+            data.Child = new Child();
+            data.DataDrivenChild = new DataDrivenChild();
 
             parent.Initialize(data);
 

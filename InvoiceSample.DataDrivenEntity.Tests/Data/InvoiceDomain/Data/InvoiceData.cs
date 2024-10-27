@@ -1,12 +1,4 @@
-﻿using InvoiceSample.DataDrivenEntity.Aggregates;
-using InvoiceSample.DataDrivenEntity.HasEntityData;
-using InvoiceSample.DataDrivenEntity.Tests.Data.TestEntities;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using InvoiceSample.DataDrivenEntity.Tests.Data.TestEntities;
 
 namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
 {
@@ -21,6 +13,18 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public Guid GetKey() => Id;
 
         object IEntityData.GetKey() => Id;
+
+        public BaseInvoiceData Copy()
+        {
+            return new BaseInvoiceData
+            {
+                Id = this.Id,
+                Name = this.Name,
+                Created = this.Created,
+                CreatedBy = this.CreatedBy,
+                Number = this.Number
+            };
+        }
     }
 
     public class InvoiceData : IInvoiceData, IEquatable<IInvoiceData>
@@ -59,23 +63,20 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
             other is not null && Id == other.Id && Name == other.Name
             && Created == other.Created && CreatedBy == other.CreatedBy
             && WarehouseReleases.OrderBy(v => v.GetKey()).SequenceEqual(
-                other.ChildrenCollectionsData
-                .Single(cc => cc.Selector == "WarehouseReleases").Collection.OrderBy(v => v.GetKey())
+                other.WarehouseReleases.OrderBy(v => v.GetKey())
             )
             && WarehouseReturns.OrderBy(v => v.GetKey()).SequenceEqual(
-                other.ChildrenCollectionsData
-                .Single(cc => cc.Selector == "WarehouseReturns").Collection.OrderBy(v => v.GetKey())
+                other.WarehouseReturns.OrderBy(v => v.GetKey())
             )
             && Lines.OrderBy(v => v.GetKey()).SequenceEqual(
-                other.ChildrenCollectionsData
-                .Single(cc => cc.Selector == "Lines").Collection.OrderBy(v => v.GetKey())
+                other.Lines.OrderBy(v => v.GetKey())
             )
-            && ((Print is null && other.ChildrenData.Single(cd => cd.Selector == "Print").Entity is null) 
-                || (Print is not null && Print.Equals(other.ChildrenData.Single(cd => cd.Selector == "Print").Entity as IInvoicePrintData)))
-            && ((Status is null && other.ChildrenData.Single(cd => cd.Selector == "Status").Entity is null)
-                || (Status is not null && Status.Equals(other.ChildrenData.Single(cd => cd.Selector == "Status").Entity as IDictionaryValueData)))
-            && ((InvoicingProcess is null && other.ChildrenData.Single(cd => cd.Selector == "InvoicingProcess").Entity is null)
-                || (InvoicingProcess is not null && InvoicingProcess.Equals(other.ChildrenData.Single(cd => cd.Selector == "InvoicingProcess").Entity as IDictionaryValueData)))
+            && ((Print is null && other.Print is null)
+                || (Print is not null && Print.Equals(other.Print)))
+            && ((Status is null && other.Status is null)
+                || (Status is not null && Status.Equals(other.Status)))
+            && ((InvoicingProcess is null && other.InvoicingProcess is null)
+                || (InvoicingProcess is not null && InvoicingProcess.Equals(other.InvoicingProcess)))
             ;
 
         public InvoicePrintData? Print { get; set; }
@@ -88,16 +89,52 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
 
         string IInvoiceData.Number => Number;
 
-        IInvoicePrintData? IHasEntityData<IInvoicePrintData, Guid>.Child => Print;
+        public InvoiceData Copy()
+        {
+            // Create a copy of BaseInvoiceData
+            var baseInvoiceDataCopy = new BaseInvoiceData
+            {
+                Id = this.Id,
+                Name = this.Name,
+                Created = this.Created,
+                CreatedBy = this.CreatedBy,
+                Number = this.Number
+            };
 
-        IEnumerable<IInvoiceLineData> IHasEntityDataCollection<IInvoiceLineData, Guid>.Children => Lines;
+            // Copy Print
+            InvoicePrintData? printCopy = this.Print?.Copy();
 
-        IEnumerable<(IEnumerable<IWarehouseMovementData> Collection, string Selector)> IHasMultipleEntityDataCollections<IWarehouseMovementData, Guid, string>.ChildrenCollections => [(WarehouseReleases, nameof(WarehouseReleases)), (WarehouseReturns, nameof(WarehouseReturns))];
+            // Copy Lines
+            var linesCopy = this.Lines.Select(line => line.Copy()).ToList();
 
-        IEnumerable<(IDictionaryValueData? ChildData, string Selector)> IHasMultipleEntityDataInstances<IDictionaryValueData, Guid, string>.ChildInstances => [(Status, nameof(Status)), (InvoicingProcess, nameof(InvoicingProcess))];
+            // Copy WarehouseReleases
+            var releasesCopy = this.WarehouseReleases.Select(release => release.Copy()).ToList();
 
-        IEnumerable<(IEntityData? Entity, string Selector)> IAggregateEntityData.ChildrenData => [(Print, nameof(Print)), (Status, nameof(Status)), (InvoicingProcess, nameof(InvoicingProcess))];
+            // Copy WarehouseReturns
+            var returnsCopy = this.WarehouseReturns.Select(ret => ret.Copy()).ToList();
 
-        IEnumerable<(IEnumerable<IEntityData> Collection, string Selector)> IAggregateEntityData.ChildrenCollectionsData => [(WarehouseReleases, nameof(WarehouseReleases)), (WarehouseReturns, nameof(WarehouseReturns)), (Lines, nameof(Lines))];
+            // Copy Status
+            DictionaryValueData? statusCopy = this.Status?.Copy();
+
+            // Copy InvoicingProcess
+            DictionaryValueData? invoicingProcessCopy = this.InvoicingProcess?.Copy();
+
+            // Create new InvoiceData instance
+            var copy = new InvoiceData(baseInvoiceDataCopy, printCopy, linesCopy, releasesCopy, returnsCopy, statusCopy, invoicingProcessCopy);
+
+            return copy;
+        }
+
+        IInvoicePrintData? IInvoiceData.Print => Print;
+
+        IEnumerable<IInvoiceLineData> IInvoiceData.Lines => Lines;
+
+        IEnumerable<IWarehouseMovementData> IInvoiceData.WarehouseReleases => WarehouseReleases;
+
+        IEnumerable<IWarehouseMovementData> IInvoiceData.WarehouseReturns => WarehouseReturns;
+
+        IDictionaryValueData? IInvoiceData.Status => Status;
+
+        IDictionaryValueData? IInvoiceData.InvoicingProcess => InvoicingProcess;
     }
 }

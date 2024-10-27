@@ -1,21 +1,28 @@
-﻿using InvoiceSample.DataDrivenEntity.Initializable;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace InvoiceSample.DataDrivenEntity.Aggregates
+﻿namespace InvoiceSample.DataDrivenEntity.Aggregates
 {
-    public record ChildEntry
+    internal record ChildEntry
     {
-        public IInitializeBase? Entity { get; set; }
-        public string Selector { get; init; }
+        public IDataDrivenEntity? Entity { get; set; }
 
-        public ChildEntry(IInitializeBase? entity, string selector)
-        {
-            Entity = entity;
-            Selector = selector;
-        }
+        public required Func<IEntityData, IEntityData?> ChildDataSelector { get; set; }
+
+        public required Action<IDataDrivenEntity> RemoveChild {  get; set; }
+        public required Action<IDataDrivenEntity> SetChild { get; set; }
+
+        public required Func<IDataDrivenEntity> ChildCreator { get; set; }
+    }
+
+    internal record ExternalChildEntry
+    {
+        public IExternalDataDrivenEntity? Entity { get; set; }
+
+        public required Func<IEntityData, IEntityData?> ChildDataSelector { get; set; }
+
+        public required Action<IExternalDataDrivenEntity> RemoveChild { get; set; }
+        public required Action<IExternalDataDrivenEntity> SetChild { get; set; }
+
+        public required Func<object> ExternalDataProvider { get; set; }
+
+        public required Func<IExternalDataDrivenEntity> ChildCreator { get; set; }
     }
 }

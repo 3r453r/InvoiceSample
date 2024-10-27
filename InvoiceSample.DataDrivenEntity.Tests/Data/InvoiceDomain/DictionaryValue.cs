@@ -10,7 +10,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
 {
     public interface IDictionaryValueData : IBaseEntityData
     { }
-    public class DictionaryValue : ChildlessSelfDataDataDrivenEntity<DictionaryValue, Guid, IDictionaryValueData>
+    public class DictionaryValue : DataDrivenEntity<DictionaryValue, Guid, IDictionaryValueData>
         , IDictionaryValueData
     {
         private bool _initialized;
@@ -30,5 +30,9 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
             CreatedBy = entityData.CreatedBy;
             _initialized = true;
         }
+
+        public override IDictionaryValueData GetEntityData() => this;
+
+        public override Guid GetKey() => Id;
     }
 }

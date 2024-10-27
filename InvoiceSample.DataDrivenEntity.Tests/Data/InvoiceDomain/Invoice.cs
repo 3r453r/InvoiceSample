@@ -1,42 +1,33 @@
-﻿using InvoiceSample.DataDrivenEntity.Aggregates;
-using InvoiceSample.DataDrivenEntity.HasEntityData;
-using InvoiceSample.DataDrivenEntity.Implementations.Basic;
+﻿using InvoiceSample.DataDrivenEntity.Implementations.Basic;
 using InvoiceSample.DataDrivenEntity.Tests.Data.TestEntities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
 {
-    using HasPrint = HasEntity.IHasChild<IInvoiceData, Guid, InvoicePrint, Guid, IInvoicePrintData, InvoicePrint>;
-    using HasLines = HasEntity.IHasChildren<IInvoiceData, Guid, InvoiceLine, Guid, IInvoiceLineData, InvoiceLine>;
-    using HasWarehouseMovements = HasEntity.IHasMultipleEntityCollections<IInvoiceData, Guid, WarehouseMovement, Guid, IWarehouseMovementData, WarehouseMovement, string>;
-    using HasDictionaryValues = HasEntity.IHasMultipleEntityInstances<IInvoiceData, Guid, DictionaryValue, Guid, IDictionaryValueData, DictionaryValue, string>;
-
-    using HasPrintData = IHasEntityData<IInvoicePrintData, Guid>;
-    using HasLinesData = IHasEntityDataCollection<IInvoiceLineData, Guid>;
-    using HasWarehouseMovementsData = IHasMultipleEntityDataCollections<IWarehouseMovementData, Guid, string>;
-    using HasDictionaryValuesData = IHasMultipleEntityDataInstances<IDictionaryValueData, Guid, string>;
-
     public interface IInvoiceData : IBaseEntityData
-        , HasPrintData
-        , HasLinesData
-        , HasWarehouseMovementsData
-        , HasDictionaryValuesData
     { 
         string Number { get; }
+        IInvoicePrintData? Print { get; }
+        IEnumerable<IInvoiceLineData> Lines {  get; }
+        IEnumerable<IWarehouseMovementData> WarehouseReleases { get; }
+        IEnumerable<IWarehouseMovementData> WarehouseReturns { get; }
+        IDictionaryValueData? Status { get; }
+        IDictionaryValueData? InvoicingProcess { get; }
     }
 
-    public class Invoice : ReflectiveSelfDataDataDrivenEntity<Invoice, Guid, IInvoiceData>
+    public class Invoice : DataDrivenEntity<Invoice, Guid, IInvoiceData>
         , IInvoiceData
-        , HasPrint
-        , HasLines
-        , HasWarehouseMovements
-        , HasDictionaryValues
     {
         private bool _initialized;
+
+        public Invoice()
+        {
+            RegisterChild<InvoicePrint, Guid, IInvoicePrintData, IInvoiceData, Guid>(Print, pd => pd.Print, (p) => { Print = null; }, (p) => { Print = (InvoicePrint)p; }, () => new InvoicePrint());
+            RegisterChildCollection<InvoiceLine, Guid, IInvoiceLineData, IInvoiceData, Guid>(Lines, pd => pd.Lines, () => new InvoiceLine());
+            RegisterChildCollection<WarehouseMovement, Guid, IWarehouseMovementData, IInvoiceData, Guid>(WarehouseReleases, pd => pd.WarehouseReleases, () => new WarehouseMovement());
+            RegisterChildCollection<WarehouseMovement, Guid, IWarehouseMovementData, IInvoiceData, Guid>(WarehouseReturns, pd => pd.WarehouseReturns, () => new WarehouseMovement());
+            RegisterChild<DictionaryValue, Guid, IDictionaryValueData, IInvoiceData, Guid>(Status, pd => pd.Status, (p) => { Status = null; }, (p) => { Status = (DictionaryValue)p; }, () => new DictionaryValue());
+            RegisterChild<DictionaryValue, Guid, IDictionaryValueData, IInvoiceData, Guid>(InvoicingProcess, pd => pd.InvoicingProcess, (p) => { InvoicingProcess = null; }, (p) => { InvoicingProcess = (DictionaryValue)p; }, () => new DictionaryValue());
+        }
 
         public Guid Id { get; set; }
         public string Name { get; set; } = "";
@@ -56,9 +47,9 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
             _initialized = true;
         }
 
-        IEnumerable<IInvoiceLineData> HasLines.GetChildrenEntityData(IInvoiceData entityData) => Lines;
+        public override IInvoiceData GetEntityData() => this;
 
-        IInvoicePrintData? HasPrint.GetChildEntityData(IInvoiceData entityData, Guid childKey) => Print;
+        public override Guid GetKey() => Id;
 
         public InvoicePrint? Print { get; set; }
         public List<InvoiceLine> Lines { get; set; } = [];
@@ -68,24 +59,16 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
         public DictionaryValue? Status { get; set; }
         public DictionaryValue? InvoicingProcess { get; set; }
 
-        IEnumerable<(DictionaryValue? Entity, string Selector)> HasDictionaryValues.ChildInstances => [(Status, nameof(Status)),(InvoicingProcess, nameof(InvoicingProcess))];
+        IInvoicePrintData? IInvoiceData.Print => Print;
 
-        IEnumerable<(ICollection<WarehouseMovement> Collection, string Selector)> HasWarehouseMovements.ChildEntityCollections => [(WarehouseReleases, nameof(WarehouseReleases)), (WarehouseReturns, nameof(WarehouseReturns))];
+        IEnumerable<IInvoiceLineData> IInvoiceData.Lines => Lines;
 
-        ICollection<InvoiceLine> HasLines.ChildEntities => Lines;
+        IEnumerable<IWarehouseMovementData> IInvoiceData.WarehouseReleases => WarehouseReleases;
 
-        InvoicePrint? HasPrint.Child { get { return Print; } set { Print = value; } }
+        IEnumerable<IWarehouseMovementData> IInvoiceData.WarehouseReturns => WarehouseReturns;
 
-        IInvoicePrintData? HasPrintData.Child => Print;
+        IDictionaryValueData? IInvoiceData.Status => Status;
 
-        IEnumerable<IInvoiceLineData> HasLinesData.Children => Lines;
-
-        IEnumerable<(IEnumerable<IWarehouseMovementData> Collection, string Selector)> HasWarehouseMovementsData.ChildrenCollections => [(WarehouseReleases, nameof(WarehouseReleases)), (WarehouseReturns, nameof(WarehouseReturns))];
-
-        IEnumerable<(IDictionaryValueData? ChildData, string Selector)> HasDictionaryValuesData.ChildInstances => [(Status, nameof(Status)), (InvoicingProcess, nameof(InvoicingProcess))];
-
-        IEnumerable<(IEntityData? Entity, string Selector)> IAggregateEntityData.ChildrenData => [(Print, nameof(Print)), (Status, nameof(Status)), (InvoicingProcess, nameof(InvoicingProcess))];
-
-        IEnumerable<(IEnumerable<IEntityData> Collection, string Selector)> IAggregateEntityData.ChildrenCollectionsData => [(WarehouseReleases, nameof(WarehouseReleases)), (WarehouseReturns, nameof(WarehouseReturns)), (Lines, nameof(Lines))];
+        IDictionaryValueData? IInvoiceData.InvoicingProcess => InvoicingProcess;
     }
 }

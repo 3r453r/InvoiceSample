@@ -21,5 +21,17 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public Guid GetKey() => Id;
 
         object IEntityData.GetKey() => Id;
+
+        public WarehouseMovementData Copy()
+        {
+            return new WarehouseMovementData
+            {
+                Id = this.Id,
+                Name = this.Name,
+                Created = this.Created,
+                CreatedBy = this.CreatedBy,
+                WarehouseMovementType = this.WarehouseMovementType
+            };
+        }
     }
 }

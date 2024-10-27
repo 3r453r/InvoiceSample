@@ -10,7 +10,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
 {
     public interface IInvoicePrintData : IBaseEntityData
     { }
-    public class InvoicePrint : ChildlessSelfDataDataDrivenEntity<InvoicePrint, Guid, IInvoicePrintData>, IInvoicePrintData
+    public class InvoicePrint : DataDrivenEntity<InvoicePrint, Guid, IInvoicePrintData>, IInvoicePrintData
     {
         private bool _initialized;
 
@@ -29,5 +29,9 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
             CreatedBy = entityData.CreatedBy;
             _initialized = true;
         }
+
+        public override IInvoicePrintData GetEntityData() => this;
+
+        public override Guid GetKey() => Id;
     }
 }

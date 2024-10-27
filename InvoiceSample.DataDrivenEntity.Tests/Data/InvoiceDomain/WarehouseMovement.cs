@@ -19,7 +19,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
         WarehouseReturn
     }
 
-    public class WarehouseMovement : ChildlessSelfDataDataDrivenEntity<WarehouseMovement, Guid, IWarehouseMovementData>, IWarehouseMovementData
+    public class WarehouseMovement : DataDrivenEntity<WarehouseMovement, Guid, IWarehouseMovementData>, IWarehouseMovementData
     {
         private bool _initialized;
 
@@ -42,5 +42,9 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
             WarehouseMovementType = entityData.WarehouseMovementType;
             _initialized = true;
         }
+
+        public override IWarehouseMovementData GetEntityData() => this;
+
+        public override Guid GetKey() => Id;
     }
 }
