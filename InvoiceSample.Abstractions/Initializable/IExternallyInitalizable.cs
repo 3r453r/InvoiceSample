@@ -4,23 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace InvoiceSample.DataDrivenEntity
+namespace InvoiceSample.DataDrivenEntity.Initializable
 {
-    public interface IInitializable
-    {
-        void Initialize(object entityData);
-        object GetKey();
-    }
-
-    public interface IInitializableWithResult : IInitializable
-    {
-        new object Initialize(object entityData);
-    }
-
-    public interface IExternallyInitializable
+    public interface IExternallyInitializable : IInitializeBase
     {
         void Initialize(object entityData, object externalData);
-        object GetKey();
     }
 
     public interface IExternallyInitializableWithResult : IExternallyInitializable

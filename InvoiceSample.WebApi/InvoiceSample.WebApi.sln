@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceSample.Persistence",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceSample.DataDrivenEntity", "..\InvoiceSample.Abstractions\InvoiceSample.DataDrivenEntity.csproj", "{485BC7C7-6601-433B-9032-4018B77CFCBA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceSample.DataDrivenEntity.Tests", "..\InvoiceSample.DataDrivenEntity.Tests\InvoiceSample.DataDrivenEntity.Tests.csproj", "{4A91A4D6-4427-46EC-8DE8-E6226B49E8DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{485BC7C7-6601-433B-9032-4018B77CFCBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{485BC7C7-6601-433B-9032-4018B77CFCBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{485BC7C7-6601-433B-9032-4018B77CFCBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A91A4D6-4427-46EC-8DE8-E6226B49E8DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A91A4D6-4427-46EC-8DE8-E6226B49E8DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A91A4D6-4427-46EC-8DE8-E6226B49E8DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A91A4D6-4427-46EC-8DE8-E6226B49E8DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

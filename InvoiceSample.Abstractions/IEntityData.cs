@@ -11,21 +11,9 @@ namespace InvoiceSample.DataDrivenEntity
         object GetKey();
     }
 
-    public interface IChildEntityData : IEntityData
-    {
-        object Selector { get; }
-    }
-
-    public interface IEntityData<TKey>
+    public interface IEntityData<TKey> : IEntityData
         where TKey : notnull
     {
-        TKey GetKey();
-    }
-
-    public interface IChildEntityData<TKey, TEntitySelector> : IEntityData<TKey>
-        where TKey : notnull
-        where TEntitySelector : notnull
-    {
-        TEntitySelector Selector { get; }
+        new TKey GetKey();
     }
 }

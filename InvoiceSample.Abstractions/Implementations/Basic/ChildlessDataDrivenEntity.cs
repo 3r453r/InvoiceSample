@@ -1,0 +1,27 @@
+﻿using InvoiceSample.DataDrivenEntity.Aggregates;
+using InvoiceSample.DataDrivenEntity.Initializable;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
+{
+    public abstract class ChildlessDataDrivenEntity<TEntity, TKey, TEntityData> : DataDrivenEntity<TEntity, TKey, TEntityData>
+        where TEntityData : IEntityData<TKey>
+        where TEntity : new()
+        where TKey : notnull
+    {
+        public override IEnumerable<ChildEntry> ChildEntries => [];
+        public override IEnumerable<CollectionEntry> CollectionEntries => [];
+        protected override IInitializeBase CreateChild(string selector)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public override void ClearChild(string selector)
+        {
+        }
+    }
+}
