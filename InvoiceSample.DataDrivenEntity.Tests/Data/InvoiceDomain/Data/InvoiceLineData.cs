@@ -12,6 +12,9 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public string Name { get; set; } = "";
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
+        public DictionaryValue Status { get; set; } = new DictionaryValue();
+
+        IDictionaryValueData IInvoiceLineData.Status => Status;
 
         public Guid GetKey() => Id;
 

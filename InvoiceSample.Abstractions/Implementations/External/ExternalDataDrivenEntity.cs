@@ -14,12 +14,15 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
         private List<ExternalChildEntry> _externalChildEntries = [];
         private List<CollectionEntry> _collectionEntries = [];
         private List<ExternalCollectionEntry> _externalCollectionEntries = [];
+        private HashSet<IDataDrivenEntityBase> _allEntities = new();
 
         public bool IsInitialized { get; private set; }
+        public bool IsNew { get; private set; } = true;
         protected abstract bool SelfInitialzed { get; }
+        public IEnumerable<IDataDrivenEntityBase> GetAllEntities() => _allEntities;
 
         public abstract TEntityData GetEntityData();
-        object IExternalDataDrivenEntity.GetEntityData() => GetEntityData();
+        object IDataDrivenEntityBase.GetEntityData() => GetEntityData();
 
         public abstract TKey GetKey();
         protected abstract void SelfInitialize(TEntityData entityData, TExternalData externalData);
@@ -41,6 +44,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
         {
             SelfInitialize(entityData, externalData);
             IsInitialized = InitializeAggregate(entityData) && SelfInitialzed;
+            IsNew = false;
         }
 
         void IExternalDataDrivenEntity.Initialize(object entityData, object externalData)
@@ -55,7 +59,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
             }
         }
 
-        object IExternalDataDrivenEntity.GetKey() => GetKey();
+        object IDataDrivenEntityBase.GetKey() => GetKey();
 
         private bool InitializeAggregate(TEntityData entityData)
         {
@@ -72,6 +76,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                     else
                     {
                         childEntry.Entity.Initialize(childData);
+                        AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
                 }
@@ -79,6 +84,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                 {
                     var newEntity = childEntry.ChildCreator();
                     newEntity.Initialize(childData);
+                    AddEntities(newEntity);
                     childEntry.SetChild(newEntity);
                     initialized &= newEntity.IsInitialized;
                 }
@@ -97,6 +103,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                     else
                     {
                         childEntry.Entity.Initialize(entityData, externalData);
+                        AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
                 }
@@ -105,6 +112,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                     var newEntity = childEntry.ChildCreator();
                     newEntity.Initialize(childData, externalData);
                     childEntry.SetChild(newEntity);
+                    AddEntities(newEntity);
                     initialized &= newEntity.IsInitialized;
                 }
             }
@@ -124,6 +132,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                         collectionEntry.Collection.Add(childEntry);
                     }
                     childEntry.Initialize(childEntryData);
+                    AddEntities(childEntry);
                     initialized &= childEntry.IsInitialized;
                 }
 
@@ -149,6 +158,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                         collectionEntry.Collection.Add(childEntry);
                     }
                     childEntry.Initialize(childEntryData, externalData);
+                    AddEntities(childEntry);
                     initialized &= childEntry.IsInitialized;
                 }
 
@@ -159,6 +169,15 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
             }
 
             return initialized;
+        }
+
+        private void AddEntities(IDataDrivenEntityBase entity)
+        {
+            _allEntities.Add(entity);
+            foreach (var entit in entity.GetAllEntities())
+            {
+                _allEntities.Add(entity);
+            }
         }
 
         public void RegisterChild<TChild, TChildKey, TChildData, TParentData, TParentKey>(

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity.Extensions;
 using System.Reflection;
 
 namespace InvoiceSample.DataDrivenEntity.Tests.Fixtures.AutoMapper
@@ -11,12 +12,11 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Fixtures.AutoMapper
         {
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.ShouldMapProperty = p => !(
-                    p.PropertyType.IsAssignableTo(typeof(IDataDrivenEntity))
-                    || p.PropertyType.IsAssignableTo(typeof(IExternalDataDrivenEntity))
-                    || p.PropertyType.IsAssignableTo(typeof(IEnumerable<IDataDrivenEntity>))
-                    || p.PropertyType.IsAssignableTo(typeof(IEnumerable<IExternalDataDrivenEntity>))
-                    );
+                cfg.GloballyIgnoreProperties(cfg =>
+                {
+                    cfg.Ignore<IDataDrivenEntityBase>()
+                    .IgnoreCollections<IDataDrivenEntityBase>();
+                });
 
                 cfg.AddMaps(Assembly.GetExecutingAssembly());
             });

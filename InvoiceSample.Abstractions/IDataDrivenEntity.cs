@@ -1,10 +1,7 @@
 ﻿namespace InvoiceSample.DataDrivenEntity
 {
-    public interface IDataDrivenEntity
+    public interface IDataDrivenEntity : IDataDrivenEntityBase
     {
-        object GetEntityData();
-        bool IsInitialized { get; }
-        object GetKey();
         void Initialize(object entityData);
     }
 

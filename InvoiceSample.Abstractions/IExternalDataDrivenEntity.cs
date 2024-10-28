@@ -1,10 +1,7 @@
 ﻿namespace InvoiceSample.DataDrivenEntity
 {
-    public interface IExternalDataDrivenEntity
+    public interface IExternalDataDrivenEntity : IDataDrivenEntityBase
     {
-        bool IsInitialized { get; }
-        object GetKey();
-        object GetEntityData();
         object? GetExternalData(object entityData);
         void Initialize(object entityData, object externalData);
     }
