@@ -1,4 +1,5 @@
-﻿using InvoiceSample.Domain.SalesOrderAggregate;
+﻿using AutoMapper;
+using InvoiceSample.Domain.SalesOrderAggregate;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +10,11 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 {
     public class PeriodicInvoice : Invoice
     {
-        public PeriodicInvoice(IInvoiceData invoiceData) : base(invoiceData)
+        public PeriodicInvoice() : base()
         {
         }
 
-        public PeriodicInvoice(ISalesOrderData salesOrderData) : base(salesOrderData)
+        public PeriodicInvoice(ISalesOrderData salesOrderData, IMapper mapper) : base(salesOrderData, mapper)
         {
         }
 
@@ -55,7 +56,9 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 
         public void AddSalesOrder(ISalesOrderData salesOrderData)
         {
-            _salesOrders.Add(new SalesOrder(salesOrderData));
+            var salesOrder = new SalesOrder();
+            salesOrder.Initialize(salesOrderData, Mapper);
+            _salesOrders.Add(salesOrder);
         }
 
         public void EndPeriod()

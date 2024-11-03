@@ -1,4 +1,7 @@
-﻿using System;
+﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.DataDrivenEntity.Implementations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.InvoiceAggregate
 {
-    public interface IVatSum
+    public interface IVatSum : IEntityData<VatRate>
     {
         VatRate VatRate { get; }
         decimal NetValue { get; }
@@ -14,15 +17,10 @@ namespace InvoiceSample.Domain.InvoiceAggregate
         decimal VatValue { get; }
     }
 
-    public class VatSum : IVatSum
+    public class VatSum : ExternalDataDrivenEntity<VatRate, IVatSum, IMapper>
+        , IVatSum
     {
-        public static VatSum Create(IVatSum vatSumData) => new VatSum
-        {
-            VatRate = vatSumData.VatRate,
-            GrossValue = vatSumData.GrossValue,
-            NetValue = vatSumData.NetValue,
-            VatValue = vatSumData.VatValue
-        };
+        private bool _initialized;
 
         public VatRate VatRate { get; set; }
 
@@ -30,15 +28,18 @@ namespace InvoiceSample.Domain.InvoiceAggregate
         public decimal GrossValue { get; set; }
         public decimal VatValue { get; set; }
 
-        public void UpdateCollections(IVatSum entityData)
+        protected override bool SelfInitialzed => _initialized;
+
+        public override IVatSum GetEntityData() => this;
+
+        public override VatRate GetKey() => VatRate;
+
+        protected override void SelfInitialize(IVatSum entityData, IMapper externalData)
         {
+            externalData.Map(entityData, this);
+            _initialized = true;
         }
 
-        public void UpdateEntity(IVatSum entityData)
-        {
-            NetValue = entityData.NetValue;
-            GrossValue = entityData.GrossValue;
-            VatValue = entityData.VatValue;
-        }
+        object IEntityData.GetKey() => VatRate;
     }
 }

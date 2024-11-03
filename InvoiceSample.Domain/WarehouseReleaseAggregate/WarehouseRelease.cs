@@ -3,57 +3,61 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.DataDrivenEntity.Implementations;
 
 namespace InvoiceSample.Domain.WarehouseReleaseAggregate
 {
-    public class WarehouseRelease : IWarehouseReleaseData
+    public class WarehouseRelease : ExternalDataDrivenEntity<string, IWarehouseReleaseData, IMapper>
+        , IWarehouseReleaseData
     {
-        public static WarehouseRelease Create(IWarehouseReleaseData warehouseReleaseData) => new WarehouseRelease(warehouseReleaseData);
+        private bool _initialized;
+        private IMapper? _mapper;
 
-        public WarehouseRelease(IWarehouseReleaseData warehouseReleaseData)
+        public WarehouseRelease()
         {
-            Number = warehouseReleaseData.Number;
-            CustomerId = warehouseReleaseData.CustomerId;
-            SalesOrderNumber = warehouseReleaseData.SalesOrderNumber;
-
-            Lines.AddRange(warehouseReleaseData.Lines.Select(l => new WarehouseReleaseLine
-            {
-                WarehouseRelease = this,
-                GrossValue = l.GrossValue,
-                NetValue = l.NetValue,
-                Ordinal = l.Ordinal,
-                ProductId = l.ProductId,
-                Quantity = l.Quantity,
-                SalesOrderLineOrdinal = l.SalesOrderLineOrdinal,
-                VatRate = l.VatRate,
-                VatValue = l.VatValue,
-            }));
+            RegisterExternalChildCollection<WarehouseReleaseLine, int, IWarehouseReleaseLine, WarehouseReleaseLineExternalData>(
+                Lines
+                , wd => wd.Lines
+                , (_, _) => new WarehouseReleaseLine()
+                , (_) => new WarehouseReleaseLineExternalData 
+                {
+                    Mapper = _mapper ?? throw new ArgumentNullException(nameof(Mapper)),
+                    WarehouseRelease = this,
+                });    
         }
 
-        public string Number { get; private set; }
+        public WarehouseRelease(IWarehouseReleaseData wd, IMapper mapper) : this()
+        {
+            _mapper = mapper;
+            Initialize(wd, mapper, true);
+            _initialized = true;
+        }
+
+        public string Number { get; private set; } = "";
 
         public Guid CustomerId { get; private set; }
 
-        public string SalesOrderNumber { get; private set; }
+        public string SalesOrderNumber { get; private set; } = "";
 
         public List<WarehouseReleaseLine> Lines { get; init; } = [];
+
+        protected override bool SelfInitialzed => _initialized;
+
         IEnumerable<IDocumentLine> IDocument.Lines => Lines;
         IEnumerable<IWarehouseReleaseLine> IWarehouseReleaseData.Lines => Lines;
 
-        public void UpdateCollections(IWarehouseReleaseData entityData)
-        {
-        }
+        public override IWarehouseReleaseData GetEntityData() => this;
 
-        public void UpdateEntity(IWarehouseReleaseData entityData)
-        {
-            Number = entityData.Number;
-            CustomerId = entityData.CustomerId;
-            SalesOrderNumber = entityData.SalesOrderNumber;
-        }
+        public override string GetKey() => Number;
+        object IEntityData.GetKey() => Number;
 
-        internal void Update(IWarehouseReleaseData warehouseReleaseData)
+        protected override void SelfInitialize(IWarehouseReleaseData entityData, IMapper externalData)
         {
-            //TODO update
+            externalData.Map(entityData, this);
+            _mapper = externalData;
+            _initialized = true;
         }
     }
 }

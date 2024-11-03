@@ -1,4 +1,5 @@
-﻿using InvoiceSample.Application.EventBus;
+﻿using AutoMapper;
+using InvoiceSample.Application.EventBus;
 using InvoiceSample.Application.Events.Integration;
 using InvoiceSample.Application.Persistence;
 using InvoiceSample.Domain.Exceptions;
@@ -17,11 +18,13 @@ namespace InvoiceSample.Application.Services.Invoice
     {
         private readonly IInvoiceSampleUnitOfWork _unitOfWork;
         private readonly IEventBus _eventBus;
+        private readonly IMapper _mapper;
 
-        public InvoiceService(IInvoiceSampleUnitOfWork unitOfWork, IEventBus eventBus)
+        public InvoiceService(IInvoiceSampleUnitOfWork unitOfWork, IEventBus eventBus, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _eventBus = eventBus;
+            _mapper = mapper;
         }
 
         public async Task<IInvoiceData> AddOrUpdateInvoice(ISalesOrderData salesOrderData)
@@ -35,30 +38,32 @@ namespace InvoiceSample.Application.Services.Invoice
 
             if (invoiceData is null && salesOrderData.AutoInvoice)
             {
-                invoiceData = new AutomaticInvoice(salesOrderData);
+                invoiceData = new AutomaticInvoice(salesOrderData, _mapper);
                 await _unitOfWork.InvoiceRepository.Add(invoiceData);
             }
             else if (invoiceData is null)
             {
-                invoiceData = new PeriodicInvoice(salesOrderData);
+                invoiceData = new PeriodicInvoice(salesOrderData, _mapper);
                 await _unitOfWork.InvoiceRepository.Add(invoiceData);
             }
             else if (invoiceData.Type == InvoiceType.Automatic)
             {
-                var autoInvoice = new AutomaticInvoice(invoiceData);
+                var autoInvoice = new AutomaticInvoice();
+                autoInvoice.Initialize(invoiceData, _mapper);
 
                 if (autoInvoice.SalesOrder.Number != salesOrderData.Number)
                 {
                     throw new BusinessRuleException($"Automatic invoice {autoInvoice.Number} connected to salesOrder {autoInvoice.SalesOrder.Number}");
                 }
 
-                autoInvoice.SalesOrder.Update(salesOrderData);
+                autoInvoice.SalesOrder.Initialize(salesOrderData, Mapper);
 
                 await _unitOfWork.InvoiceRepository.Update(autoInvoice);
             }
             else
             {
-                var periodicInvoice = new PeriodicInvoice(invoiceData);
+                var periodicInvoice = new PeriodicInvoice();
+                periodicInvoice.Initialize(invoiceData, _mapper);
                 var salesOrder = periodicInvoice.SalesOrders.FirstOrDefault(so => so.Number ==  salesOrderData.Number);
                 if(salesOrder is null)
                 {
@@ -66,7 +71,7 @@ namespace InvoiceSample.Application.Services.Invoice
                 }
                 else
                 {
-                    salesOrder.Update(salesOrderData);
+                    salesOrder.Initialize(salesOrderData, Mapper);
                 }
 
                 await _unitOfWork.InvoiceRepository.Update(periodicInvoice);
@@ -74,6 +79,8 @@ namespace InvoiceSample.Application.Services.Invoice
 
             return invoiceData;
         }
+
+        protected IMapper Mapper => _mapper ?? throw new ArgumentNullException(nameof(_mapper));
 
         public async Task<IInvoiceData?> GetInvoice(string number)
         {
@@ -88,9 +95,10 @@ namespace InvoiceSample.Application.Services.Invoice
             if (alreadyInvoiced) { throw new BusinessRuleException($"salesOrder {warehouseReleaseData.SalesOrderNumber} already invoiced"); }
             if (invoiceData is null) { throw new BusinessRuleException($"invalid salesOrderNumber - {warehouseReleaseData.SalesOrderNumber}"); }
 
-            var invoice = invoiceData.Type == InvoiceType.Automatic ? new AutomaticInvoice(invoiceData) 
-                : new PeriodicInvoice(invoiceData) as Domain.InvoiceAggregate.Invoice;
+            var invoice = invoiceData.Type == InvoiceType.Automatic ? new AutomaticInvoice() 
+                : new PeriodicInvoice() as Domain.InvoiceAggregate.Invoice;
 
+            invoice.Initialize(invoiceData, _mapper);
             invoice.UpdateLines(warehouseReleaseData);
 
             if (invoice.IsReadyToComplete())
@@ -117,7 +125,9 @@ namespace InvoiceSample.Application.Services.Invoice
             var invoiceData = await _unitOfWork.InvoiceRepository.GetPeriodicDraftByCustomer(customerId);
             if (invoiceData == null) { return null; }
 
-            var invoice = new PeriodicInvoice(invoiceData);
+            var invoice = new PeriodicInvoice();
+            invoice.Initialize(invoiceData, _mapper);
+
             invoice.EndPeriod();
 
             if (invoice.IsReadyToComplete()) {

@@ -10,7 +10,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
 {
     public interface IInvoicePrintData : IBaseEntityData
     { }
-    public class InvoicePrint : DataDrivenEntity<InvoicePrint, Guid, IInvoicePrintData>, IInvoicePrintData
+    public class InvoicePrint : DataDrivenEntity<Guid, IInvoicePrintData>, IInvoicePrintData
     {
         private bool _initialized;
 

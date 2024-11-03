@@ -1,4 +1,5 @@
-﻿using InvoiceSample.Application.Persistence;
+﻿using AutoMapper;
+using InvoiceSample.Application.Persistence;
 using InvoiceSample.Persistence.ApplicationImplementtion.Repositiories;
 using System;
 using System.Collections.Generic;
@@ -13,10 +14,10 @@ namespace InvoiceSample.Persistence.ApplicationImplementtion
         private readonly InvoiceSampleDbContext _dbContext;
         private readonly InvoiceRepository _invoiceRepository;
 
-        public InvoiceSampleUnitOfWork(InvoiceSampleDbContext dbContext)
+        public InvoiceSampleUnitOfWork(InvoiceSampleDbContext dbContext, IMapper mapper)
         {
             _dbContext = dbContext;
-            _invoiceRepository = new InvoiceRepository(dbContext);
+            _invoiceRepository = new InvoiceRepository(dbContext, mapper);
         }
 
         public IInvoiceRepository InvoiceRepository => _invoiceRepository;

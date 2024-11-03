@@ -1,4 +1,7 @@
-﻿using InvoiceSample.Domain.SalesOrderAggregate;
+﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.DataDrivenEntity.Implementations;
+using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using System;
 using System.Collections.Generic;
@@ -8,8 +11,39 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.InvoiceAggregate
 {
-    public class InvoiceLine : IInvoiceLine
+    public class InvoiceLine : ExternalDataDrivenEntity<int, IInvoiceLine, InvoiceLineExternalData>
+        , IInvoiceLine
     {
+        private IMapper? _mapper;
+        public InvoiceLine()
+        {
+            RegisterExternalChild<SalesOrderLine, int, ISalesOrderLine, SalesOrderLineExternalData>(
+               SalesOrderLine
+               , il => il.SalesOrderLine
+               , (p) => { SalesOrderLine = null; }
+               , (p) => { SalesOrderLine = (SalesOrderLine)p; }
+               , (_) => new SalesOrderLine(), (data) => new SalesOrderLineExternalData 
+               {
+                   SalesOrder = Invoice.SalesOrders.First(so => so.Number == data.Invoice.Number),
+                   Mapper = _mapper ?? throw new ArgumentNullException(nameof(Mapper)),
+               });
+
+            RegisterExternalChild<WarehouseReleaseLine, int, IWarehouseReleaseLine, WarehouseReleaseLineExternalData>(
+               WarehouseReleaseLine
+               , il => il.WarehouseReleaseLine
+               , (p) => { WarehouseReleaseLine = null; }
+               , (p) => { WarehouseReleaseLine = (WarehouseReleaseLine)p; }
+               , (_) => new WarehouseReleaseLine()
+               , (data) => new WarehouseReleaseLineExternalData
+               {
+                   WarehouseRelease = Invoice.SalesOrders.SelectMany(so => so.WarehouseReleases)
+                    .First(wr => wr.Number == data.WarehouseReleaseLine!.WarehouseRelease.Number),
+                   Mapper = _mapper ?? throw new ArgumentNullException(nameof(Mapper)),
+               });
+        }
+
+        private bool _initialized;
+
         public int Ordinal { get; set; }
 
         public decimal NetValue { get; set; }
@@ -27,20 +61,31 @@ namespace InvoiceSample.Domain.InvoiceAggregate
         public WarehouseReleaseLine? WarehouseReleaseLine { get; set; }
         IWarehouseReleaseLine? IInvoiceLine.WarehouseReleaseLine => WarehouseReleaseLine;
 
-        public required Invoice Invoice { get; set; }
+        public Invoice Invoice { get; set; } = new AutomaticInvoice();
         public IDocument Document => Invoice;
         IInvoiceData IInvoiceLine.Invoice => Invoice;
 
         public SalesOrderLine? SalesOrderLine { get; set; }
         ISalesOrderLine? IInvoiceLine.SalesOrderLine => SalesOrderLine;
 
-        public void UpdateCollections(IInvoiceLine entityData, Invoice invoice)
+        protected override bool SelfInitialzed => _initialized;
+
+        public override IInvoiceLine GetEntityData() => this;
+
+        public override int GetKey() => Ordinal;
+
+        protected override void SelfInitialize(IInvoiceLine entityData, InvoiceLineExternalData externalData)
         {
+            Invoice = externalData.Invoice;
+            externalData.Mapper.Map(entityData, this);
         }
 
-        public void UpdateEntity(IInvoiceLine entityData, Invoice invoice)
-        {
-            throw new NotImplementedException();
-        }
+        object IEntityData.GetKey() => Ordinal;
+    }
+
+    public record InvoiceLineExternalData
+    {
+        public required Invoice Invoice { get; set; }
+        public required IMapper Mapper { get; set; }
     }
 }

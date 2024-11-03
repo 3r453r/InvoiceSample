@@ -1,4 +1,5 @@
-﻿using InvoiceSample.Domain;
+﻿using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain;
 using InvoiceSample.Domain.SalesOrderAggregate;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class SalesOrderLine : Entity, ISalesOrderLine
+    public class SalesOrderLine : Entity<SalesOrderLine, int, ISalesOrderLine>, ISalesOrderLine
     {
-        public required SalesOrder SalesOrder { get; set; }
+        public SalesOrder SalesOrder { get; set; } = new SalesOrder();
         ISalesOrderData ISalesOrderLine.SalesOrder => SalesOrder;
         public IDocument Document => SalesOrder;
 
@@ -19,7 +20,7 @@ namespace InvoiceSample.Persistence.Tables
 
         public int Ordinal { get; set; }
 
-        [Precision(18,2)]
+        [Precision(18, 2)]
         public decimal NetValue { get; set; }
 
         [Precision(18, 2)]
@@ -35,12 +36,12 @@ namespace InvoiceSample.Persistence.Tables
 
         public VatRate VatRate { get; set; }
 
-        public bool IsEqual(ISalesOrderLine? other) => other is not null &&
-            SalesOrder.Number == other.SalesOrder.Number && Ordinal == other.Ordinal;
+        object IEntityData.GetKey() => Ordinal;
 
-        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
-        {
-            throw new NotImplementedException();
-        }
+        public override ISalesOrderLine GetEntityData() => this;
+
+        public override object GetKey() => Ordinal;
+
+        int IEntityData<int>.GetKey() => Ordinal;
     }
 }

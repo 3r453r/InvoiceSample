@@ -19,7 +19,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
         WarehouseReturn
     }
 
-    public class WarehouseMovement : DataDrivenEntity<WarehouseMovement, Guid, IWarehouseMovementData>, IWarehouseMovementData
+    public class WarehouseMovement : DataDrivenEntity<Guid, IWarehouseMovementData>, IWarehouseMovementData
     {
         private bool _initialized;
 

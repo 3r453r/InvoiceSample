@@ -39,12 +39,12 @@ namespace InvoiceSample.DataDrivenEntity.Tests
             //Arrange
             var originalInvoice = new Invoice();
             originalInvoice.Initialize(testData.OriginalData);
-            originalInvoice.Initialize(testData.ModifiedData);
+
             //Act
-            testData.Modify(originalInvoice);
+            originalInvoice.Initialize(testData.ModifiedData);
 
             //Assert
-            originalInvoice.GetEntityData().Should().BeEquivalentTo(testData.ModifiedData);
+            originalInvoice.GetEntityData().Should().BeEquivalentTo((IInvoiceData)testData.ModifiedData);
         }
     }
 }

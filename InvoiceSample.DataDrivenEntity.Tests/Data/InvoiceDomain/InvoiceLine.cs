@@ -12,13 +12,13 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
     {
         IDictionaryValueData Status { get; }
     }
-    public class InvoiceLine : DataDrivenEntity<InvoiceLine, Guid, IInvoiceLineData>, IInvoiceLineData
+    public class InvoiceLine : DataDrivenEntity<Guid, IInvoiceLineData>, IInvoiceLineData
     {
         private bool _initialized;
 
         public InvoiceLine()
         {
-            RegisterChild<DictionaryValue, Guid, IDictionaryValueData, IInvoiceLineData, Guid>(Status, id => id.Status, (_) => { throw new InvalidOperationException("Status cannot be null"); }, (s) => { Status = (DictionaryValue)s; }, () => new DictionaryValue());    
+            RegisterChild<DictionaryValue, Guid, IDictionaryValueData>(Status, id => id.Status, (_) => { throw new InvalidOperationException("Status cannot be null"); }, (s) => { Status = (DictionaryValue)s; }, (_) => new DictionaryValue());    
         }
 
         public Guid Id { get; set; }

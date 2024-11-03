@@ -1,4 +1,7 @@
-﻿using InvoiceSample.Domain;
+﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain;
+using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,9 +12,13 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class WarehouseMovementLine : Entity, IWarehouseReleaseLine
+    public class WarehouseMovementLine : Entity<WarehouseMovementLine, int, IWarehouseReleaseLine>, IWarehouseReleaseLine
     {
-        public required WarehouseMovement WarehouseMovement { get; set; }
+        public WarehouseMovementLine()
+        {
+        }
+
+        public WarehouseMovement WarehouseMovement { get; set; } = new();
         IWarehouseReleaseData IWarehouseReleaseLine.WarehouseRelease => WarehouseMovement;
         public IDocument Document => WarehouseMovement;
 
@@ -36,12 +43,12 @@ namespace InvoiceSample.Persistence.Tables
 
         public VatRate VatRate { get; set; }
 
-        public bool IsEqual(IWarehouseReleaseLine? other) => other is not null &&
-            WarehouseMovement.Number == other.WarehouseRelease.Number && Ordinal == other.Ordinal;
+        object IEntityData.GetKey() => Ordinal;
 
-        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
-        {
-            throw new NotImplementedException();
-        }
+        public override IWarehouseReleaseLine GetEntityData() => this;
+
+        public override object GetKey() => Ordinal;
+
+        int IEntityData<int>.GetKey() => Ordinal;
     }
 }

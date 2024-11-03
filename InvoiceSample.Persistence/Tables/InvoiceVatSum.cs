@@ -1,4 +1,5 @@
-﻿using InvoiceSample.Domain;
+﻿using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain;
 using InvoiceSample.Domain.InvoiceAggregate;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class InvoiceVatSum : Entity, IVatSum
+    public class InvoiceVatSum : Entity<InvoiceVatSum, VatRate, IVatSum>, IVatSum
     {
-        public required Invoice Invoice{ get; set; }
+        public Invoice Invoice { get; set; } = new Invoice();
 
         public VatRate VatRate { get; set; }
 
@@ -24,8 +25,13 @@ namespace InvoiceSample.Persistence.Tables
         [Precision(18, 2)]
         public decimal VatValue { get; set; }
 
-        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
-        {
-        }
+        public override IVatSum GetEntityData() => this;
+
+
+        public override object GetKey() => VatRate;
+
+        object IEntityData.GetKey() => VatRate;
+
+        VatRate IEntityData<VatRate>.GetKey() => VatRate;
     }
 }

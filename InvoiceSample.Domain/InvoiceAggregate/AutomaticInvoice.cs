@@ -1,4 +1,5 @@
-﻿using InvoiceSample.Domain.SalesOrderAggregate;
+﻿using AutoMapper;
+using InvoiceSample.Domain.SalesOrderAggregate;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,33 +10,26 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 {
     public class AutomaticInvoice : Invoice
     {
-        private readonly SalesOrder _salesOrder;
-
-        public AutomaticInvoice(IInvoiceData invoiceData) : base(invoiceData)
+        public AutomaticInvoice() : base()
         {
-            if (_salesOrders.Count != 1)
-                throw new ArgumentException("automatic invoice can only have one salesOrder");
-
-            _salesOrder = _salesOrders.First();
         }
 
-        public AutomaticInvoice(ISalesOrderData salesOrderData) : base(salesOrderData)
+        public AutomaticInvoice(ISalesOrderData salesOrderData, IMapper mapper) : base(salesOrderData, mapper)
         {
-            _salesOrder = _salesOrders.First();
         }
 
-        public SalesOrder SalesOrder => _salesOrder;
+        public SalesOrder SalesOrder => _salesOrders.First();
 
         public override void Complete()
         {
             State = InvoiceState.ReadyToInvoice;
 
-            _salesOrder.ServiceLinesInvoiced = true;
+            SalesOrder.ServiceLinesInvoiced = true;
 
             var i = 1;
             var maxOrdinal = _lines.Any() ? _lines.Max(l => l.Ordinal) : 0;
 
-            foreach (var salesOrderLine in _salesOrder.Lines.Where(l => l.IsService))
+            foreach (var salesOrderLine in SalesOrder.Lines.Where(l => l.IsService))
             {
                 _lines.Add(new InvoiceLine
                 {
@@ -56,7 +50,7 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 
         public override bool IsReadyToComplete()
         {
-            return _salesOrder.IsCompleted();
+            return SalesOrder.IsCompleted();
         }
     }
 }

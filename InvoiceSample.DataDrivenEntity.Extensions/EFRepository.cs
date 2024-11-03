@@ -1,12 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity.Aggregates;
+using InvoiceSample.DataDrivenEntity.Implementations;
+using Microsoft.EntityFrameworkCore;
 
 namespace InvoiceSample.DataDrivenEntity.Extensions
 {
-    public static class EFRepository
+    public abstract class EFRepository<TEntity, TKey, TEntityData>
+    where TEntity : class, IDataDrivenEntity<TKey, TEntityData, IMapper>, IAggregateEntity<TKey, TEntityData>
+    where TKey : notnull
+    where TEntityData : IEntityData<TKey>
     {
+        private readonly DbContext _dbContext;
+
+        protected EFRepository(DbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public abstract Task<TEntity?> FindByDataKey(TKey key);
+        protected abstract TEntity CreateTableEntity();
+
+        protected async Task<TEntity> AddOrUpdateEntity(TEntityData entityData, IMapper mapper)
+        {
+            var tableEntity = await FindByDataKey(entityData.GetKey());
+            if (tableEntity == null)
+            {
+                tableEntity = CreateTableEntity();
+                await _dbContext.Set<TEntity>().AddAsync(tableEntity);
+            }
+
+            tableEntity.Initialize(entityData, mapper);
+
+            foreach (var childEntity in tableEntity.GetAllEntities())
+            {
+                if (childEntity.IsNew)
+                {
+                    var entry = _dbContext.Entry(childEntity);
+                    entry.State = EntityState.Added;
+                }
+            }
+
+            return tableEntity;
+        }
     }
 }

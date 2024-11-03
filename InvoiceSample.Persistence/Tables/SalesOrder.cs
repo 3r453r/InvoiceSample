@@ -1,4 +1,7 @@
-﻿using InvoiceSample.Domain;
+﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain;
+using InvoiceSample.Domain.InvoiceAggregate;
 using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +14,38 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class SalesOrder : Entity, ISalesOrderData
+    public class SalesOrder : Entity<SalesOrder, string, ISalesOrderData>, ISalesOrderData
     {
+        public SalesOrder()
+        {
+            RegisterExternalChildCollection<SalesOrderLine, int, ISalesOrderLine, IMapper>(
+                    Lines
+                    , d => d.Lines
+                    , (_, _) => new SalesOrderLine()
+                    , (_) => _mapper!
+                );
+
+            RegisterExternalChildCollection<WarehouseMovement, string, IWarehouseReleaseData, IMapper>(
+                    WarehouseReleases
+                    , d => d.WarehouseReleases
+                    , (_, _) => new WarehouseMovement()
+                    , (_) => _mapper!
+                );
+
+            RegisterExternalChildCollection<Invoice, Guid, IInvoiceData, IMapper>(
+                    Invoices
+                    , d => d.Invoices
+                    , (_, _) => new Invoice()
+                    , (_) => _mapper!
+                );
+        }
+
         public bool AutoInvoice { get; set; }
 
         public bool ServiceLinesInvoiced { get; set; }
 
         [MaxLength(50)]
-        public required string Number { get; set; }
+        public string Number { get; set; } = "";
 
         public Guid CustomerId { get; set; }
 
@@ -30,28 +57,14 @@ namespace InvoiceSample.Persistence.Tables
         IEnumerable<IWarehouseReleaseData> ISalesOrderData.WarehouseReleases => WarehouseReleases;
 
         public List<Invoice> Invoices { get; set; } = [];
+        IEnumerable<Domain.InvoiceAggregate.IInvoiceData> ISalesOrderData.Invoices => Invoices;
 
-        public static SalesOrder CreateFromData(ISalesOrderData data)
-        {
-            return new SalesOrder
-            {
-                Number = data.Number,
-                AutoInvoice = data.AutoInvoice,
-                CustomerId = data.CustomerId,
-                ServiceLinesInvoiced = data.ServiceLinesInvoiced,
-            };
-        }
+        string IEntityData<string>.GetKey() => Number;
 
-        public void UpdateFromData(ISalesOrderData data)
-        {
-            Number = data.Number;
-            AutoInvoice = data.AutoInvoice;
-            CustomerId = data.CustomerId;
-            ServiceLinesInvoiced = data.ServiceLinesInvoiced;
-        }
+        object IEntityData.GetKey() => Number;
 
-        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
-        {
-        }
+        public override ISalesOrderData GetEntityData() => this;
+
+        public override object GetKey() => Number;
     }
 }

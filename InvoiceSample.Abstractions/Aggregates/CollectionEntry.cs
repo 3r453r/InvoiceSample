@@ -1,19 +1,19 @@
 ﻿namespace InvoiceSample.DataDrivenEntity.Aggregates
 {
-    internal record CollectionEntry
+    public record CollectionEntry
     {
         public required ICollection<IDataDrivenEntity> Collection { get; set; }
         public required Func<IEntityData, IEnumerable<IEntityData>> ChildCollectionDataSelector { get; set; }
-        public required Func<IDataDrivenEntity> ChildCreator { get; set; }
+        public required Func<IEntityData, IEntityData, IDataDrivenEntity> ChildCreator { get; set; }
 
     }
 
-    internal record ExternalCollectionEntry
+    public record ExternalCollectionEntry
     {
         public required ICollection<IExternalDataDrivenEntity> Collection { get; set; }
         public required Func<IEntityData, IEnumerable<IEntityData>> ChildCollectionDataSelector { get; set; }
-        public required Func<object> ExternalDataProvider { get; set; }
-        public required Func<IExternalDataDrivenEntity> ChildCreator { get; set; }
+        public required Func<object, object> ExternalDataProvider { get; set; }
+        public required Func<IEntityData, IEntityData, IExternalDataDrivenEntity> ChildCreator { get; set; }
 
     }
 }

@@ -1,4 +1,7 @@
-﻿using InvoiceSample.Domain.Exceptions;
+﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.DataDrivenEntity.Implementations;
+using InvoiceSample.Domain.Exceptions;
 using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using System;
@@ -9,61 +12,71 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.InvoiceAggregate
 {
-    public abstract class Invoice : IInvoiceData
+    public abstract class Invoice : ExternalDataDrivenEntity<Guid, IInvoiceData, IMapper>
+        , IInvoiceData
     {
+        private bool _initialized;
+
         protected readonly List<InvoiceLine> _lines = [];
         protected readonly List<VatSum> _vatSums = [];
         protected readonly List<SalesOrder> _salesOrders = [];
+        protected IMapper? _mapper;
 
-        public Invoice(IInvoiceData invoiceData)
+        protected Invoice()
         {
-            Number = invoiceData.Number;
-            State = invoiceData.State;
-            NetValue = invoiceData.NetValue;
-            VatValue = invoiceData.VatValue;
-            GrossValue = invoiceData.GrossValue;
-
-            foreach (var lineGroup in invoiceData.Lines.GroupBy(l => l.WarehouseReleaseLine?.Document.Number)) 
-            { 
-                var warehouseReleaseData = lineGroup.First().WarehouseReleaseLine?.WarehouseRelease;
-                var warehouseRelease = warehouseReleaseData is not null ? 
-                    new WarehouseRelease(warehouseReleaseData) : null;
-
-                var salesOrderData = lineGroup.First(l => l.SalesOrderLine is not null).SalesOrderLine!.SalesOrder;
-                var salesOrder = new SalesOrder(salesOrderData);
-                if(warehouseRelease?.SalesOrderNumber != salesOrder.Number)
-                {
-                    throw new ArgumentException("WR doesn't match SO");
-                }
-
-                _lines.AddRange(lineGroup.Select(dl => new InvoiceLine
-                {
-                    GrossValue = dl.GrossValue,
-                    NetValue = dl.NetValue,
-                    Ordinal = dl.Ordinal,
-                    ProductId = dl.ProductId,
-                    Quantity = dl.Quantity,
-                    VatValue = dl.VatValue,
-                    Invoice = this,
-                    VatRate = dl.VatRate,
-                    WarehouseReleaseLine = warehouseRelease?.Lines.First(l => l.Ordinal == dl.WarehouseReleaseLine!.Ordinal),
-                    SalesOrderLine = salesOrder.Lines.FirstOrDefault(l => l.Ordinal == dl.SalesOrderLine?.Ordinal),
-                }));
-            }
-
-            _salesOrders.AddRange(invoiceData.SalesOrders.Select(so => new SalesOrder(so)));
+            RegisterExternalChildCollection<InvoiceLine, int, IInvoiceLine, InvoiceLineExternalData>(
+                    _lines
+                    , d => d.Lines
+                    , (_, _) => new InvoiceLine()
+                    , (_) => new InvoiceLineExternalData { Invoice = this, Mapper = Mapper}
+                );
+            RegisterExternalChildCollection<VatSum, VatRate, IVatSum, IMapper>(
+                    _vatSums
+                    , d => d.VatSums
+                    , (_, _) => new VatSum()
+                    , (_) => Mapper
+                );
+            RegisterExternalChildCollection<SalesOrder, string, ISalesOrderData, IMapper>(
+                    _salesOrders
+                    , d => d.SalesOrders
+                    , (_, _) => new SalesOrder()
+                    , (_) => Mapper
+                );
         }
 
-        public Invoice(ISalesOrderData salesOrderData)
+        protected Invoice(IMapper mapper) : this()
+        {
+            _mapper = mapper;
+        }
+
+        public Invoice(ISalesOrderData salesOrderData, IMapper mapper) : this(mapper)
         {
             Number = $"I/{salesOrderData.Number}";
             CustomerId = salesOrderData.CustomerId;
             State = InvoiceState.Draft;
             Type = salesOrderData.AutoInvoice ? InvoiceType.Automatic : InvoiceType.Periodic;
-            _salesOrders.Add(new SalesOrder(salesOrderData));
+
+            var salesOrder = new SalesOrder();
+            salesOrder.Initialize(salesOrderData, Mapper);
+            _salesOrders.Add(salesOrder);
         }
 
-        public string Number { get; protected set; }
+        protected override void SelfInitialize(IInvoiceData entityData, IMapper externalData)
+        {
+            _mapper = externalData;
+            _mapper.Map(entityData, this);
+            _initialized = true;
+        }
+
+        protected override bool SelfInitialzed => _initialized;
+
+        public override Guid GetKey() => Id;
+
+        protected IMapper Mapper => _mapper ?? throw new ArgumentNullException(nameof(Mapper));
+
+        public Guid Id { get; protected set; }
+
+        public string Number { get; protected set; } = "";
 
         public decimal NetValue { get; protected set; }
 
@@ -85,6 +98,9 @@ namespace InvoiceSample.Domain.InvoiceAggregate
         public IEnumerable<SalesOrder> SalesOrders => _salesOrders;
         IEnumerable<ISalesOrderData> IInvoiceData.SalesOrders => _salesOrders;
 
+
+        public override IInvoiceData GetEntityData() => this;
+
         public abstract bool IsReadyToComplete();
 
         public abstract void Complete();
@@ -104,7 +120,7 @@ namespace InvoiceSample.Domain.InvoiceAggregate
             }
             else
             {
-                warehouseRelease.Update(warehouseReleaseData);
+                warehouseRelease.Initialize(warehouseReleaseData, Mapper);
             }
 
             List<int> existingOrdinals = [];
@@ -120,7 +136,6 @@ namespace InvoiceSample.Domain.InvoiceAggregate
                 else 
                 { 
                     existingOrdinals.Add(line.Ordinal);
-                    UpdateLine(line, newLine);
                 }
             }
 
@@ -187,28 +202,6 @@ namespace InvoiceSample.Domain.InvoiceAggregate
             }
         }
 
-        protected void UpdateLine(InvoiceLine line, WarehouseReleaseLine newLine)
-        {
-            line.VatRate = newLine.VatRate;
-            line.VatValue = newLine.VatValue;
-            line.NetValue = newLine.NetValue;
-            line.ProductId = newLine.ProductId;
-            line.Quantity = newLine.Quantity;
-            line.GrossValue = newLine.GrossValue;
-        }
-
-        public void UpdateCollections(IInvoiceData entityData)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void UpdateEntity(IInvoiceData entityData)
-        {
-            Number = entityData.Number;
-            State = entityData.State;
-            NetValue = entityData.NetValue;
-            VatValue = entityData.VatValue;
-            GrossValue = entityData.GrossValue;
-        }
+        object IEntityData.GetKey() => GetKey();
     }
 }

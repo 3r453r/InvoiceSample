@@ -1,4 +1,6 @@
-﻿using InvoiceSample.Domain;
+﻿using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain;
+using InvoiceSample.Domain.InvoiceAggregate;
 using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using System.ComponentModel.DataAnnotations;
@@ -30,6 +32,12 @@ namespace InvoiceSample.WebApi.Dtos
 
         [Required]
         public Guid CustomerId { get; set; }
+
+        public IEnumerable<IInvoiceData> Invoices => [];
+
+        public string GetKey() => Number;
+
+        object IEntityData.GetKey() => Number;
     }
 
     public class SalesOrderLineData : ISalesOrderLine
@@ -66,6 +74,9 @@ namespace InvoiceSample.WebApi.Dtos
         public VatRate VatRate { get; set; }
 
         public IDocument Document => SalesOrder;
+
+        public int GetKey() => Ordinal;
+        object IEntityData.GetKey() => Ordinal;
     }
 
     public class SalesOrderLine

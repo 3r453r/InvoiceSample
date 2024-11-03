@@ -1,4 +1,6 @@
-﻿using InvoiceSample.Domain;
+﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain;
 using InvoiceSample.Domain.InvoiceAggregate;
 using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
@@ -11,9 +13,30 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class InvoiceLine : Entity, IInvoiceLine
+    public class InvoiceLine : Entity<InvoiceLine, int, IInvoiceLine>, IInvoiceLine
     {
-        public required Invoice Invoice { get; set; }
+        public InvoiceLine()
+        {
+            RegisterExternalChild<WarehouseMovementLine, int, IWarehouseReleaseLine, IMapper>(
+                WarehouseReleaseLine
+                , d => d.WarehouseReleaseLine
+                , (_) => { WarehouseReleaseLine = null; }
+                , (e) => { WarehouseReleaseLine = (WarehouseMovementLine)e; }
+                , (_) => new WarehouseMovementLine()
+                , (_) => _mapper!
+                );
+
+            RegisterExternalChild<SalesOrderLine, int, ISalesOrderLine, IMapper>(
+                SalesOrderLine
+                , d => d.SalesOrderLine
+                , (_) => { SalesOrderLine = null; }
+                , (e) => { SalesOrderLine = (SalesOrderLine)e; }
+                , (_) => new SalesOrderLine()
+                , (_) => _mapper!
+                );
+        }
+
+        public Invoice Invoice { get; set; } = new Invoice();
         public IDocument Document => Invoice;
         IInvoiceData IInvoiceLine.Invoice => Invoice;
 
@@ -41,38 +64,12 @@ namespace InvoiceSample.Persistence.Tables
 
         public VatRate VatRate { get; set; }
 
-        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
-        {
-        }
+        object IEntityData.GetKey() => Ordinal;
 
-        public static InvoiceLine CreateFromData(IInvoiceLine invoiceLine, Invoice invoice)
-        {
-            var salesOrderLine = invoice.SalesOrders
-                .FirstOrDefault(so => invoiceLine.SalesOrderLine?.SalesOrder.Number == so.Number)
-                ?.Lines.FirstOrDefault(l => l.Ordinal == invoiceLine.SalesOrderLine?.Ordinal);
+        public override IInvoiceLine GetEntityData() => this;
 
-            var warehouseReleaseLine = invoice.SalesOrders.SelectMany(so => so.WarehouseReleases)
-                .FirstOrDefault(wr => wr.Number == invoiceLine.WarehouseReleaseLine?.WarehouseRelease.Number)
-                ?.Lines.FirstOrDefault(l => l.Ordinal == invoiceLine.WarehouseReleaseLine?.Ordinal);
+        public override object GetKey() => Ordinal;
 
-            return new InvoiceLine
-            {
-                Invoice = invoice,
-                GrossValue = invoice.GrossValue,
-                NetValue = invoiceLine.NetValue,
-                Ordinal = invoiceLine.Ordinal,
-                ProductId = invoiceLine.ProductId,
-                Quantity = invoiceLine.Quantity,
-                VatRate = invoiceLine.VatRate,
-                VatValue = invoiceLine.VatValue,
-                SalesOrderLine = salesOrderLine,
-                WarehouseReleaseLine = warehouseReleaseLine,
-            };
-        }
-
-        public void UpdateFromData(IInvoiceLine invoiceLineData, Invoice invoice)
-        {
-            //TODO implement
-        }
+        int IEntityData<int>.GetKey() => Ordinal;
     }
 }

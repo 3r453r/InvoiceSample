@@ -19,7 +19,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
         IEnumerable<IBaseEntityData> Children { get; }
     }
 
-    public class Parent : DataDrivenEntity<Parent, Guid, IParentData>, IParentData
+    public class Parent : DataDrivenEntity<Guid, IParentData>, IParentData
     {
         private readonly IMapper? _mapper;
         private bool _selfInitialized;
@@ -80,7 +80,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
 
     public interface IDataDrivenChildData : IBaseEntityData
     { }
-    public class DataDrivenChild : DataDrivenEntity<DataDrivenChild, Guid, IDataDrivenChildData>, IDataDrivenChildData
+    public class DataDrivenChild : DataDrivenEntity<Guid, IDataDrivenChildData>, IDataDrivenChildData
     {
         private bool _selfInitialized;
 

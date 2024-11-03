@@ -2,18 +2,15 @@
 {
     public interface IExternalDataDrivenEntity : IDataDrivenEntityBase
     {
-        object? GetExternalData(object entityData);
-        void Initialize(object entityData, object externalData);
+        void Initialize(object entityData, object externalData, bool isNew = false);
     }
 
-    public interface IDataDrivenEntity<TSelf, TKey, TEntityData, TExternalData> : IExternalDataDrivenEntity
+    public interface IDataDrivenEntity<TKey, TEntityData, TExternalData> : IExternalDataDrivenEntity
     where TEntityData : IEntityData<TKey>
-    where TSelf : new()
     where TKey : notnull
     where TExternalData : class
     {
-        void Initialize(TEntityData entityData, TExternalData externalData);
+        void Initialize(TEntityData entityData, TExternalData externalData, bool isNew = false);
         new TEntityData GetEntityData();
-        TExternalData? GetExternalData(TEntityData entityData);
     }
 }

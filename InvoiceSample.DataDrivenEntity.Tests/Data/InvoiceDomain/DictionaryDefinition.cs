@@ -8,14 +8,17 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
         IEnumerable<IDictionaryValueData> Values { get; }
     }
 
-    public class DictionaryDefinition : DataDrivenEntity<DictionaryDefinition, Guid, IDictionaryDefinitionData>
+    public class DictionaryDefinition : DataDrivenEntity<Guid, IDictionaryDefinitionData>
         , IDictionaryDefinitionData
     {
         private bool _initialized;
 
         public DictionaryDefinition()
         {
-            RegisterChildCollection<DictionaryValue, Guid, IDictionaryValueData, IDictionaryDefinitionData, Guid>(Values, pd => pd.Values, () => new DictionaryValue());
+            RegisterChildCollection<DictionaryValue, Guid, IDictionaryValueData>(
+                Values
+                , pd => pd.Values
+                , (_, _) => new DictionaryValue());
         }
 
         public Guid Id { get; set; }

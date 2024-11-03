@@ -11,7 +11,7 @@ namespace InvoiceSample.DataDrivenEntity
         object GetEntityData();
         bool IsInitialized { get; }
         object GetKey();
-        bool IsNew { get; }
+        bool IsNew { get; set; }
         IEnumerable<IDataDrivenEntityBase> GetAllEntities();
     }
 }

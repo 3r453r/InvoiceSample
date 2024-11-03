@@ -3,10 +3,9 @@ using InvoiceSample.DataDrivenEntity.Implementations.Helpers;
 
 namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
 {
-    public abstract class DataDrivenEntity<TEntity, TKey, TEntityData>
-        : IDataDrivenEntity<TEntity, TKey, TEntityData>, IAggregateEntity
+    public abstract class DataDrivenEntity<TKey, TEntityData>
+        : IDataDrivenEntity<TKey, TEntityData>, IAggregateEntity<TKey, TEntityData>
         where TEntityData : IEntityData<TKey>
-        where TEntity : new()
         where TKey : notnull
     {
         private List<ChildEntry> _childEntries = [];
@@ -17,7 +16,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
         private HashSet<IDataDrivenEntityBase> _allEntities = new();
 
         public bool IsInitialized { get; private set; }
-        public bool IsNew { get; private set; } = true;
+        public bool IsNew { get; set; }
         protected abstract bool SelfInitialzed { get; }
         public IEnumerable<IDataDrivenEntityBase> GetAllEntities() => _allEntities;
 
@@ -28,18 +27,18 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
         object IDataDrivenEntityBase.GetEntityData() => GetEntityData();
         object IDataDrivenEntityBase.GetKey() => GetKey();
 
-        public void Initialize(TEntityData entityData)
+        public void Initialize(TEntityData entityData, bool isNew = false)
         {
             SelfInitialize(entityData);
-            IsInitialized = InitializeAggregate(entityData) && SelfInitialzed;
-            IsNew = false;
+            IsInitialized = InitializeAggregate(entityData, isNew) && SelfInitialzed;
+            IsNew = isNew;
         }
 
-        void IDataDrivenEntity.Initialize(object entityData)
+        void IDataDrivenEntity.Initialize(object entityData, bool isNew)
         {
             if (entityData is TEntityData ed)
             {
-                Initialize(ed);
+                Initialize(ed, isNew);
             }
             else
             {
@@ -47,60 +46,57 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
             }
         }
 
-        public void RegisterChild<TChild, TChildKey, TChildData, TParentData, TParentKey>(
+        public void RegisterChild<TChild, TChildKey, TChildData>(
             TChild? child
-            , Func<TParentData, TChildData?> childDataSelector
+            , Func<TEntityData, TChildData?> childDataSelector
             , Action<IDataDrivenEntity> removeChild
             , Action<IDataDrivenEntity> setChild
-            , Func<IDataDrivenEntity<TChild, TChildKey, TChildData>> childCreator)
-            where TChild : IDataDrivenEntity<TChild, TChildKey, TChildData>, new()
+            , Func<TEntityData, TChild> childCreator)
+            where TChild : IDataDrivenEntity<TChildKey, TChildData>
             where TChildKey : notnull
             where TChildData : IEntityData<TChildKey>
-            where TParentData : IEntityData<TParentKey>
-            where TParentKey : notnull
+
         {
             _childEntries.Add(new ChildEntry
             {
                 Entity = child,
                 ChildDataSelector = parentData =>
                 {
-                    if (parentData is TParentData typedParentData)
+                    if (parentData is TEntityData typedParentData)
                     {
                         return childDataSelector(typedParentData);
                     }
                     else
                     {
-                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TParentData)}, but got {parentData.GetType()}.");
+                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TEntityData)}, but got {parentData.GetType()}.");
                     }
                 },
                 RemoveChild = entity =>
                 {
-                    if (entity is IDataDrivenEntity<TChild, TChildKey, TChildData> typedEntity)
+                    if (entity is IDataDrivenEntity<TChildKey, TChildData> typedEntity)
                     {
                         removeChild(typedEntity);
                     }
                     else
                     {
-                        throw new InvalidCastException($"Expected entity to be of type {typeof(IDataDrivenEntity<TChild, TChildKey, TChildData>)}, but got {entity.GetType()}.");
+                        throw new InvalidCastException($"Expected entity to be of type {typeof(IDataDrivenEntity<TChildKey, TChildData>)}, but got {entity.GetType()}.");
                     }
                 },
-                ChildCreator = childCreator,
+                ChildCreator = (p) => childCreator((TEntityData)p),
                 SetChild = setChild,
             });
         }
 
-        public void RegisterExternalChild<TChild, TChildKey, TChildData, TParentData, TParentKey, TExternalData>(
+        public void RegisterExternalChild<TChild, TChildKey, TChildData, TExternalData>(
             TChild? child
-            , Func<TParentData, TChildData?> childDataSelector
+            , Func<TEntityData, TChildData?> childDataSelector
             , Action<IExternalDataDrivenEntity> removeChild
             , Action<IExternalDataDrivenEntity> setChild
-            , Func<IDataDrivenEntity<TChild, TChildKey, TChildData, TExternalData>> childCreator
-            , Func<TExternalData> externalDataProvider)
-            where TChild : IDataDrivenEntity<TChild, TChildKey, TChildData, TExternalData>, new()
+            , Func<TEntityData, TChild> childCreator
+            , Func<TEntityData, TExternalData> externalDataProvider)
+            where TChild : IDataDrivenEntity<TChildKey, TChildData, TExternalData>
             where TChildKey : notnull
             where TChildData : IEntityData<TChildKey>
-            where TParentData : IEntityData<TParentKey>
-            where TParentKey : notnull
             where TExternalData : class
         {
             _externalChildEntries.Add(new ExternalChildEntry
@@ -108,92 +104,109 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
                 Entity = child,
                 ChildDataSelector = parentData =>
                 {
-                    if (parentData is TParentData typedParentData)
+                    if (parentData is TEntityData typedParentData)
                     {
                         return childDataSelector(typedParentData);
                     }
                     else
                     {
-                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TParentData)}, but got {parentData.GetType()}.");
+                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TEntityData)}, but got {parentData.GetType()}.");
                     }
                 },
                 RemoveChild = entity =>
                 {
-                    if (entity is IDataDrivenEntity<TChild, TChildKey, TChildData, TExternalData> typedEntity)
+                    if (entity is IDataDrivenEntity<TChildKey, TChildData, TExternalData> typedEntity)
                     {
                         removeChild(typedEntity);
                     }
                     else
                     {
-                        throw new InvalidCastException($"Expected entity to be of type {typeof(IDataDrivenEntity<TChild, TChildKey, TChildData>)}, but got {entity.GetType()}.");
+                        throw new InvalidCastException($"Expected entity to be of type {typeof(IDataDrivenEntity<TChildKey, TChildData>)}, but got {entity.GetType()}.");
                     }
                 },
-                ChildCreator = childCreator,
-                ExternalDataProvider = externalDataProvider,
+                ChildCreator = (p) => childCreator((TEntityData)p)
+                ,
+                ExternalDataProvider = parentData => 
+                { 
+                    if(parentData is TEntityData typedParentData)
+                    {
+                        return externalDataProvider(typedParentData);
+                    }
+                    else
+                    {
+                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TEntityData)}, but got {parentData.GetType()}.");
+                    }
+                },
                 SetChild = setChild,
             });
         }
 
-        public void RegisterChildCollection<TChild, TChildKey, TChildData, TParentData, TParentKey>
+        public void RegisterChildCollection<TChild, TChildKey, TChildData>
             (ICollection<TChild> collection
-            , Func<TParentData, IEnumerable<TChildData>> childCollectionDataSelector
-            , Func<IDataDrivenEntity<TChild, TChildKey, TChildData>> childCreator)
-            where TChild : IDataDrivenEntity<TChild, TChildKey, TChildData>, new()
+            , Func<TEntityData, IEnumerable<TChildData>> childCollectionDataSelector
+            , Func<TEntityData, TChildData, TChild> childCreator)
+            where TChild : IDataDrivenEntity<TChildKey, TChildData>
             where TChildKey : notnull
             where TChildData : IEntityData<TChildKey>
-            where TParentData : IEntityData<TParentKey>
-            where TParentKey : notnull
         {
             _collectionEntries.Add(new CollectionEntry
             {
                 Collection = new CollectionWrapper<TChild>(collection),
-                ChildCreator = childCreator,
+                ChildCreator = (p, c) => childCreator((TEntityData)p, (TChildData)c),
                 ChildCollectionDataSelector = parentData =>
                 {
-                    if (parentData is TParentData typedParentData)
+                    if (parentData is TEntityData typedParentData)
                     {
                         return childCollectionDataSelector(typedParentData).Cast<IEntityData>();
                     }
                     else
                     {
-                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TParentData)}, but got {parentData.GetType()}.");
+                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TEntityData)}, but got {parentData.GetType()}.");
                     }
                 },
             });
         }
 
-        public void RegisterExternalChildCollection<TChild, TChildKey, TChildData, TParentData, TParentKey, TExternalData>(
+        public void RegisterExternalChildCollection<TChild, TChildKey, TChildData, TExternalData>(
             ICollection<TChild> collection
-            , Func<TParentData, IEnumerable<TChildData>> childCollectionDataSelector
-            , Func<IDataDrivenEntity<TChild, TChildKey, TChildData, TExternalData>> childCreator
-            , Func<TExternalData> externalDataProvider)
-            where TChild : IDataDrivenEntity<TChild, TChildKey, TChildData, TExternalData>, new()
+            , Func<TEntityData, IEnumerable<TChildData>> childCollectionDataSelector
+            , Func<TEntityData, TChildData, TChild> childCreator
+            , Func<TEntityData, TExternalData> externalDataProvider)
+            where TChild : IDataDrivenEntity<TChildKey, TChildData, TExternalData>
             where TChildKey : notnull
             where TChildData : IEntityData<TChildKey>
-            where TParentData : IEntityData<TParentKey>
-            where TParentKey : notnull
             where TExternalData : class
         {
             _externalCollectionEntries.Add(new ExternalCollectionEntry
             {
                 Collection = new ExternalCollectionWrapper<TChild>(collection),
-                ChildCreator = childCreator,
+                ChildCreator = (p, c) => childCreator((TEntityData)p, (TChildData)c),
                 ChildCollectionDataSelector = parentData =>
                 {
-                    if (parentData is TParentData typedParentData)
+                    if (parentData is TEntityData typedParentData)
                     {
                         return childCollectionDataSelector(typedParentData).Cast<IEntityData>();
                     }
                     else
                     {
-                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TParentData)}, but got {parentData.GetType()}.");
+                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TEntityData)}, but got {parentData.GetType()}.");
                     }
                 },
-                ExternalDataProvider = externalDataProvider
+                ExternalDataProvider = parentData =>
+                {
+                    if (parentData is TEntityData typedParentData)
+                    {
+                        return externalDataProvider(typedParentData);
+                    }
+                    else
+                    {
+                        throw new InvalidCastException($"Expected parentData to be of type {typeof(TEntityData)}, but got {parentData.GetType()}.");
+                    }
+                }
             });
         }
 
-        private bool InitializeAggregate(TEntityData entityData)
+        private bool InitializeAggregate(TEntityData entityData, bool isNew)
         {
             var initialized = true;
             foreach (var childEntry in _childEntries) 
@@ -207,16 +220,17 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
                     }
                     else
                     {
-                        childEntry.Entity.Initialize(childData);
+                        childEntry.Entity.Initialize(childData, isNew);
                         AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
                 }
                 else if (childData is not null)
                 {
-                    var newEntity = childEntry.ChildCreator();
-                    newEntity.Initialize(childData);
+                    var newEntity = childEntry.ChildCreator(entityData);
+                    newEntity.Initialize(childData, isNew);
                     AddEntities(newEntity);
+                    childEntry.Entity = newEntity;
                     childEntry.SetChild(newEntity);
                     initialized &= newEntity.IsInitialized;
                 }
@@ -225,7 +239,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
             foreach (var childEntry in _externalChildEntries)
             {
                 var childData = childEntry.ChildDataSelector(entityData);
-                var externalData = childEntry.ExternalDataProvider();
+                var externalData = childEntry.ExternalDataProvider(entityData);
                 if (childEntry.Entity is not null)
                 {
                     if(childData is null)
@@ -234,15 +248,16 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
                     }
                     else
                     {
-                        childEntry.Entity.Initialize(entityData, externalData);
+                        childEntry.Entity.Initialize(entityData, externalData, isNew);
                         AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
                 }
                 else if(childData is not null)
                 {
-                    var newEntity = childEntry.ChildCreator();
-                    newEntity.Initialize(childData, externalData);
+                    var newEntity = childEntry.ChildCreator(entityData);
+                    newEntity.Initialize(childData, externalData, isNew);
+                    childEntry.Entity = newEntity;
                     childEntry.SetChild(newEntity);
                     AddEntities(newEntity);
                     initialized &= newEntity.IsInitialized;
@@ -260,10 +275,10 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
                     var childEntry = collectionEntry.Collection.FirstOrDefault(e => e.GetKey().Equals(key));
                     if(childEntry is null)
                     {
-                        childEntry = collectionEntry.ChildCreator();
+                        childEntry = collectionEntry.ChildCreator(entityData, childEntryData);
                         collectionEntry.Collection.Add(childEntry);
                     }
-                    childEntry.Initialize(childEntryData);
+                    childEntry.Initialize(childEntryData, isNew);
                     AddEntities(childEntry);
                     initialized &= childEntry.IsInitialized;
                 }
@@ -277,7 +292,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
             foreach (var collectionEntry in _externalCollectionEntries)
             {
                 var collectionData = collectionEntry.ChildCollectionDataSelector(entityData);
-                var externalData = collectionEntry.ExternalDataProvider();
+                var externalData = collectionEntry.ExternalDataProvider(entityData);
                 var existingKeys = new List<object>();
                 foreach (var childEntryData in collectionData)
                 {
@@ -286,10 +301,10 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
                     var childEntry = collectionEntry.Collection.FirstOrDefault(e => e.GetKey().Equals(key));
                     if (childEntry is null)
                     {
-                        childEntry = collectionEntry.ChildCreator();
+                        childEntry = collectionEntry.ChildCreator(entityData, childEntryData);
                         collectionEntry.Collection.Add(childEntry);
                     }
-                    childEntry.Initialize(childEntryData, externalData);
+                    childEntry.Initialize(childEntryData, externalData, isNew);
                     AddEntities(childEntry);
                     initialized &= childEntry.IsInitialized;
                 }
@@ -306,9 +321,9 @@ namespace InvoiceSample.DataDrivenEntity.Implementations.Basic
         private void AddEntities(IDataDrivenEntityBase entity)
         {
             _allEntities.Add(entity);
-            foreach (var entit in entity.GetAllEntities())
+            foreach (var child in entity.GetAllEntities())
             {
-                _allEntities.Add(entity);
+                _allEntities.Add(child);
             }
         }
     }

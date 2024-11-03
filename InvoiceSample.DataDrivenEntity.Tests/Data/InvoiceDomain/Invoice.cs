@@ -14,19 +14,19 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
         IDictionaryValueData? InvoicingProcess { get; }
     }
 
-    public class Invoice : DataDrivenEntity<Invoice, Guid, IInvoiceData>
+    public class Invoice : DataDrivenEntity<Guid, IInvoiceData>
         , IInvoiceData
     {
         private bool _initialized;
 
         public Invoice()
         {
-            RegisterChild<InvoicePrint, Guid, IInvoicePrintData, IInvoiceData, Guid>(Print, pd => pd.Print, (p) => { Print = null; }, (p) => { Print = (InvoicePrint)p; }, () => new InvoicePrint());
-            RegisterChildCollection<InvoiceLine, Guid, IInvoiceLineData, IInvoiceData, Guid>(Lines, pd => pd.Lines, () => new InvoiceLine());
-            RegisterChildCollection<WarehouseMovement, Guid, IWarehouseMovementData, IInvoiceData, Guid>(WarehouseReleases, pd => pd.WarehouseReleases, () => new WarehouseMovement());
-            RegisterChildCollection<WarehouseMovement, Guid, IWarehouseMovementData, IInvoiceData, Guid>(WarehouseReturns, pd => pd.WarehouseReturns, () => new WarehouseMovement());
-            RegisterChild<DictionaryValue, Guid, IDictionaryValueData, IInvoiceData, Guid>(Status, pd => pd.Status, (p) => { Status = null; }, (p) => { Status = (DictionaryValue)p; }, () => new DictionaryValue());
-            RegisterChild<DictionaryValue, Guid, IDictionaryValueData, IInvoiceData, Guid>(InvoicingProcess, pd => pd.InvoicingProcess, (p) => { InvoicingProcess = null; }, (p) => { InvoicingProcess = (DictionaryValue)p; }, () => new DictionaryValue());
+            RegisterChild<InvoicePrint, Guid, IInvoicePrintData>(Print, pd => pd.Print, (p) => { Print = null; }, (p) => { Print = (InvoicePrint)p; }, (_) => new InvoicePrint());
+            RegisterChildCollection<InvoiceLine, Guid, IInvoiceLineData>(Lines, pd => pd.Lines, (_, _) => new InvoiceLine());
+            RegisterChildCollection<WarehouseMovement, Guid, IWarehouseMovementData>(WarehouseReleases, pd => pd.WarehouseReleases, (_, _) => new WarehouseMovement());
+            RegisterChildCollection<WarehouseMovement, Guid, IWarehouseMovementData>(WarehouseReturns, pd => pd.WarehouseReturns, (_, _) => new WarehouseMovement());
+            RegisterChild<DictionaryValue, Guid, IDictionaryValueData>(Status, pd => pd.Status, (p) => { Status = null; }, (p) => { Status = (DictionaryValue)p; }, (_) => new DictionaryValue());
+            RegisterChild<DictionaryValue, Guid, IDictionaryValueData>(InvoicingProcess, pd => pd.InvoicingProcess, (p) => { InvoicingProcess = null; }, (p) => { InvoicingProcess = (DictionaryValue)p; }, (_) => new DictionaryValue());
         }
 
         public Guid Id { get; set; }

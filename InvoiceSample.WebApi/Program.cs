@@ -1,9 +1,13 @@
 using InvoiceSample.Application.EventBus;
 using InvoiceSample.Application.Persistence;
 using InvoiceSample.Application.Services.Invoice;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.DataDrivenEntity.Extensions;
+using InvoiceSample.DataDrivenEntity.Implementations.Basic;
 using InvoiceSample.Persistence;
 using InvoiceSample.Persistence.ApplicationImplementtion;
 using InvoiceSample.Persistence.Extensions;
+using InvoiceSample.Persistence.Tables;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -25,6 +29,18 @@ builder.Services.AddDbContext<InvoiceSampleDbContext>(opt =>
 {
     opt.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"));
 });
+
+builder.Services.AddAutoMapper(cfg => {
+    cfg.GloballyIgnoreProperties(cfg =>
+    {
+        cfg.Ignore<IDataDrivenEntityBase>()
+        .IgnoreCollections<IDataDrivenEntityBase>()
+        .Ignore<IEntityData>()
+        .IgnoreCollections<IEntityData>();
+    });
+    },
+    typeof(InvoiceSample.Domain.MappingProfiles.InvoiceMappingProfile).Assembly
+    , typeof(InvoiceSample.Persistence.MappingProfiles.InvoiceMappingProfile).Assembly);
 
 builder.Services.AddScoped<IInvoiceSampleUnitOfWork, InvoiceSampleUnitOfWork>();
 builder.Services.AddSingleton<IEventBus, MockEventBus>();

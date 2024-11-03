@@ -10,7 +10,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
 {
     public interface IDictionaryValueData : IBaseEntityData
     { }
-    public class DictionaryValue : DataDrivenEntity<DictionaryValue, Guid, IDictionaryValueData>
+    public class DictionaryValue : DataDrivenEntity<Guid, IDictionaryValueData>
         , IDictionaryValueData
     {
         private bool _initialized;

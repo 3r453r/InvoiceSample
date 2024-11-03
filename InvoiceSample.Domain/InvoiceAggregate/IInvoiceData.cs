@@ -1,4 +1,5 @@
-﻿using InvoiceSample.Domain.SalesOrderAggregate;
+﻿using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using System;
 using System.Collections.Generic;
@@ -8,8 +9,9 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.InvoiceAggregate
 {
-    public interface IInvoiceData : IDocument
+    public interface IInvoiceData : IDocument, IEntityData<Guid>
     {
+        Guid Id { get; }
         decimal NetValue { get; }
         decimal VatValue { get; }
         decimal GrossValue { get; }

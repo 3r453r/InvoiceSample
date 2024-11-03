@@ -38,7 +38,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
                 Id = Guid.NewGuid(),
                 Created = DateTime.Now,
                 CreatedBy = 1,
-                Name = "a",
+                Name = "noAction",
                 Number = "b"
             }, new InvoicePrintData
             {
@@ -127,7 +127,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
                 Id = Guid.NewGuid(),
                 Created = dateTime,
                 CreatedBy = 1,
-                Name = "a",
+                Name = "NewEntries",
                 Number = "b"
             }, null
             , new List<InvoiceLineData>
@@ -263,7 +263,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
                 Id = Guid.NewGuid(),
                 Created = dateTime,
                 CreatedBy = 1,
-                Name = "a",
+                Name = "RemovedEntries",
                 Number = "b"
             }, new InvoicePrintData
             {
@@ -368,7 +368,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
                 Id = Guid.NewGuid(),
                 Created = DateTime.Now,
                 CreatedBy = 1,
-                Name = "a",
+                Name = "UpdateAction",
                 Number = "b"
             }, new InvoicePrintData
             {
@@ -449,7 +449,17 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
 
             modifiedData.InvoicingProcess!.Name = "d";
 
-            Action<Invoice> modify = (invoice) => { };
+            Action<Invoice> modify = (invoice) => 
+            {
+                invoice.CreatedBy = 2;
+                invoice.Name = "b";
+
+                var line = invoice.Lines.ElementAt(1);
+                line.Name = "c";
+                line.CreatedBy = 3;
+
+                invoice.InvoicingProcess!.Name = "d";
+            };
 
             return new TestData
             {

@@ -2,16 +2,15 @@
 {
     public interface IDataDrivenEntity : IDataDrivenEntityBase
     {
-        void Initialize(object entityData);
+        void Initialize(object entityData, bool isNew = false);
     }
 
-    public interface IDataDrivenEntity<TSelf, TKey, TEntityData> 
+    public interface IDataDrivenEntity<TKey, TEntityData> 
         : IDataDrivenEntity
-        where TSelf : new()
         where TEntityData : IEntityData<TKey>
         where TKey : notnull
     {
-        void Initialize(TEntityData entityData);
+        void Initialize(TEntityData entityData, bool isNew = false);
         new TEntityData GetEntityData();
         new TKey GetKey(); 
     }

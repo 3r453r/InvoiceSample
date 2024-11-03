@@ -1,6 +1,9 @@
-﻿using InvoiceSample.Domain;
+﻿using AutoMapper;
+using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain;
 using InvoiceSample.Domain.InvoiceAggregate;
 using InvoiceSample.Domain.SalesOrderAggregate;
+using InvoiceSample.Domain.WarehouseReleaseAggregate;
 using InvoiceSample.Persistence.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -11,8 +14,32 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class Invoice : Entity, IInvoiceData
+    public class Invoice : Entity<Invoice, Guid, IInvoiceData>, IInvoiceData
     {
+        public Invoice()
+        {
+            RegisterExternalChildCollection<InvoiceLine, int, IInvoiceLine, IMapper>(
+        Lines
+        , d => d.Lines
+        , (_, _) => new InvoiceLine()
+        , (_) => _mapper!
+    );
+
+            RegisterExternalChildCollection<InvoiceVatSum, VatRate, IVatSum, IMapper>(
+                    VatSums
+                    , d => d.VatSums
+                    , (_, _) => new InvoiceVatSum()
+                    , (_) => _mapper!
+                );
+
+            RegisterExternalChildCollection<SalesOrder, string, ISalesOrderData, IMapper>(
+                    SalesOrders
+                    , d => d.SalesOrders
+                    , (_, _) => new SalesOrder()
+                    , (_) => _mapper!
+                );
+        }
+
         [Precision(18,2)]
         public decimal NetValue { get; set; }
 
@@ -37,35 +64,14 @@ namespace InvoiceSample.Persistence.Tables
         public List<SalesOrder> SalesOrders { get; set; } = [];
         IEnumerable<ISalesOrderData> IInvoiceData.SalesOrders => SalesOrders;
 
-        public required string Number { get; set; }
+        public string Number { get; set; } = "";
 
         public Guid CustomerId { get; set; }
 
-        public override void UpdateCollections<TEntityData>(TEntityData entityData, DbContext dbContext)
-        {
-            if (entityData is IInvoiceData invoiceData)
-            {
-                SalesOrders.UpdateCollection(
-                    invoiceData.SalesOrders
-                    , dbContext
-                    , SalesOrder.CreateFromData
-                    , (e, ed) => e.UpdateFromData(ed)
-                    , so => so.Number
-                    , sod => sod.Number
-                    );
+        public override IInvoiceData GetEntityData() => this;
 
-                Lines.UpdateCollection(
-                    invoiceData.Lines
-                    , dbContext
-                    , l => InvoiceLine.CreateFromData(l, this)
-                    , (e, ed) => e.UpdateFromData(ed, this)
-                    , l => l.Ordinal
-                    , ld => ld.Ordinal);
-            }
-            else
-            {
-                throw new ArgumentException("invalid entity data type");
-            }
-        }
+        Guid IEntityData<Guid>.GetKey() => Id;
+
+        public override object GetKey() => Id;
     }
 }

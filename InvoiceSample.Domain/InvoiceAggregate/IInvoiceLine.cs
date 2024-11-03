@@ -1,9 +1,10 @@
-﻿using InvoiceSample.Domain.SalesOrderAggregate;
+﻿using InvoiceSample.DataDrivenEntity;
+using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
 
 namespace InvoiceSample.Domain.InvoiceAggregate
 {
-    public interface IInvoiceLine : IDocumentLine
+    public interface IInvoiceLine : IDocumentLine, IEntityData<int>
     {
         IWarehouseReleaseLine? WarehouseReleaseLine { get; }
         ISalesOrderLine? SalesOrderLine { get; }
