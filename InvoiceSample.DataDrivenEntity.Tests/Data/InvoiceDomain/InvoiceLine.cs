@@ -18,7 +18,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
 
         public InvoiceLine()
         {
-            RegisterChild<DictionaryValue, Guid, IDictionaryValueData>(Status, id => id.Status, (_) => { throw new InvalidOperationException("Status cannot be null"); }, (s) => { Status = (DictionaryValue)s; }, (_) => new DictionaryValue());    
+            RegisterChild(Status, id => id.Status, (_) => { throw new InvalidOperationException("Status cannot be null"); }, (s) => { Status = (DictionaryValue)s; }, (_) => new DictionaryValue());    
         }
 
         public Guid Id { get; set; }

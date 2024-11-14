@@ -18,10 +18,10 @@ namespace InvoiceSample.Persistence.Tables
     {
         public SalesOrder()
         {
-            RegisterExternalChildCollection<SalesOrderLine, int, ISalesOrderLine, IMapper>(
+            RegisterExternalChildCollection<SalesOrderLine, (string SalesOrderNumber, int Ordinal), ISalesOrderLine, IMapper>(
                     Lines
                     , d => d.Lines
-                    , (_, _) => new SalesOrderLine()
+                    , (_, _) => new SalesOrderLine { SalesOrder = this }
                     , (_) => _mapper!
                 );
 

@@ -10,33 +10,36 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class InvoiceLine : Entity<InvoiceLine, int, IInvoiceLine>, IInvoiceLine
+    public class InvoiceLine : Entity<InvoiceLine, (string InvoiceNumber, int Ordinal), IInvoiceLine>, IInvoiceLine
     {
         public InvoiceLine()
         {
-            RegisterExternalChild<WarehouseMovementLine, int, IWarehouseReleaseLine, IMapper>(
+            RegisterExternalChild(
                 WarehouseReleaseLine
                 , d => d.WarehouseReleaseLine
                 , (_) => { WarehouseReleaseLine = null; }
                 , (e) => { WarehouseReleaseLine = (WarehouseMovementLine)e; }
-                , (_) => new WarehouseMovementLine()
+                , (data) => new WarehouseMovementLine { WarehouseMovement = Invoice!.SalesOrders.SelectMany(so => so.WarehouseReleases)
+                    .First(wr => wr.Number == data.WarehouseReleaseLine!.WarehouseRelease.Number)
+                }
                 , (_) => _mapper!
                 );
 
-            RegisterExternalChild<SalesOrderLine, int, ISalesOrderLine, IMapper>(
+            RegisterExternalChild(
                 SalesOrderLine
                 , d => d.SalesOrderLine
                 , (_) => { SalesOrderLine = null; }
                 , (e) => { SalesOrderLine = (SalesOrderLine)e; }
-                , (_) => new SalesOrderLine()
+                , (data) => new SalesOrderLine { SalesOrder = Invoice!.SalesOrders.First(so => so.Number == data.SalesOrderLine!.Document.Number) }
                 , (_) => _mapper!
                 );
         }
 
-        public Invoice Invoice { get; set; } = new Invoice();
+        public required Invoice Invoice { get; set; }
         public IDocument Document => Invoice;
         IInvoiceData IInvoiceLine.Invoice => Invoice;
 
@@ -64,12 +67,13 @@ namespace InvoiceSample.Persistence.Tables
 
         public VatRate VatRate { get; set; }
 
-        object IEntityData.GetKey() => Ordinal;
-
         public override IInvoiceLine GetEntityData() => this;
 
-        public override object GetKey() => Ordinal;
+        public override object GetKey() => (Invoice.Number, Ordinal);
 
-        int IEntityData<int>.GetKey() => Ordinal;
+        (string InvoiceNumber, int Ordinal) IEntityData<(string InvoiceNumber, int Ordinal)>.GetKey()
+        {
+            return (Invoice.Number, Ordinal);
+        }
     }
 }

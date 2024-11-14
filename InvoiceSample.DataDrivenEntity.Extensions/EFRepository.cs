@@ -19,6 +19,7 @@ namespace InvoiceSample.DataDrivenEntity.Extensions
 
         public abstract Task<TEntity?> FindByDataKey(TKey key);
         protected abstract TEntity CreateTableEntity();
+        protected abstract Task SetCustomNavigations(TEntity entity, TEntityData entityData);
 
         protected async Task<TEntity> AddOrUpdateEntity(TEntityData entityData, IMapper mapper)
         {
@@ -31,6 +32,7 @@ namespace InvoiceSample.DataDrivenEntity.Extensions
 
             tableEntity.Initialize(entityData, mapper);
 
+            var allEntties = tableEntity.GetAllEntities().ToList();
             foreach (var childEntity in tableEntity.GetAllEntities())
             {
                 if (childEntity.IsNew)
@@ -39,6 +41,8 @@ namespace InvoiceSample.DataDrivenEntity.Extensions
                     entry.State = EntityState.Added;
                 }
             }
+
+            await SetCustomNavigations(tableEntity, entityData);
 
             return tableEntity;
         }

@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class InvoiceVatSum : Entity<InvoiceVatSum, VatRate, IVatSum>, IVatSum
+    public class InvoiceVatSum : Entity<InvoiceVatSum, (string InvoiceNumber, VatRate VatRate), IVatSum>, IVatSum
     {
-        public Invoice Invoice { get; set; } = new Invoice();
+        public required Invoice Invoice { get; set; }
 
         public VatRate VatRate { get; set; }
 
@@ -28,10 +28,10 @@ namespace InvoiceSample.Persistence.Tables
         public override IVatSum GetEntityData() => this;
 
 
-        public override object GetKey() => VatRate;
+        public override object GetKey() => (Invoice.Number, VatRate);
 
-        object IEntityData.GetKey() => VatRate;
+        object IEntityData.GetKey() => (Invoice.Number, VatRate);
 
-        VatRate IEntityData<VatRate>.GetKey() => VatRate;
+        (string InvoiceNumber, VatRate VatRate) IEntityData<(string InvoiceNumber, VatRate VatRate)>.GetKey() => (Invoice.Number, VatRate);
     }
 }

@@ -14,6 +14,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
         private List<CollectionEntry> _collectionEntries = [];
         private List<ExternalCollectionEntry> _externalCollectionEntries = [];
         private HashSet<IDataDrivenEntityBase> _allEntities = new();
+        private IInitializationContext? _initializationContext;
 
         public bool IsInitialized { get; private set; }
         public bool IsNew { get; set; } = true;
@@ -26,18 +27,27 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
         public abstract TKey GetKey();
         protected abstract void SelfInitialize(TEntityData entityData, TExternalData externalData);
 
-        public void Initialize(TEntityData entityData, TExternalData externalData, bool isNew = false)
+        public void Initialize(TEntityData entityData, TExternalData externalData, IInitializationContext? context = null, bool isNew = false)
         {
             SelfInitialize(entityData, externalData);
-            IsInitialized = InitializeAggregate(entityData, isNew) && SelfInitialzed;
+
+            _initializationContext = context is null ? new InitializationContext() : context;
+            if (_initializationContext.IsInitialized(this))
+            {
+                return;
+            }
+
+            _initializationContext.Add(this);
+
+            IsInitialized = InitializeAggregate(entityData, isNew, _initializationContext) && SelfInitialzed;
             IsNew = isNew;
         }
 
-        void IExternalDataDrivenEntity.Initialize(object entityData, object externalData, bool isNew)
+        void IExternalDataDrivenEntity.Initialize(object entityData, object externalData, IInitializationContext? initializationContext, bool isNew)
         {
             if (entityData is TEntityData enD && externalData is TExternalData exD)
             {
-                Initialize(enD, exD, isNew);
+                Initialize(enD, exD, initializationContext, isNew);
             }
             else
             {
@@ -47,7 +57,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
 
         object IDataDrivenEntityBase.GetKey() => GetKey();
 
-        private bool InitializeAggregate(TEntityData entityData, bool isNew)
+        private bool InitializeAggregate(TEntityData entityData, bool isNew, IInitializationContext context)
         {
             var initialized = true;
             foreach (var childEntry in _childEntries)
@@ -61,7 +71,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                     }
                     else
                     {
-                        childEntry.Entity.Initialize(childData, isNew);
+                        childEntry.Entity.Initialize(childData, context, isNew);
                         AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
@@ -69,7 +79,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                 else if (childData is not null)
                 {
                     var newEntity = childEntry.ChildCreator(entityData);
-                    newEntity.Initialize(childData, isNew);
+                    newEntity.Initialize(childData, context, isNew);
                     AddEntities(newEntity);
                     childEntry.SetChild(newEntity);
                     initialized &= newEntity.IsInitialized;
@@ -88,7 +98,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                     }
                     else
                     {
-                        childEntry.Entity.Initialize(entityData, externalData, isNew);
+                        childEntry.Entity.Initialize(entityData, externalData, context, isNew);
                         AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
@@ -96,7 +106,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                 else if (childData is not null)
                 {
                     var newEntity = childEntry.ChildCreator(entityData);
-                    newEntity.Initialize(childData, externalData, isNew);
+                    newEntity.Initialize(childData, externalData, context, isNew);
                     childEntry.SetChild(newEntity);
                     AddEntities(newEntity);
                     initialized &= newEntity.IsInitialized;
@@ -117,7 +127,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                         childEntry = collectionEntry.ChildCreator(entityData, childEntryData);
                         collectionEntry.Collection.Add(childEntry);
                     }
-                    childEntry.Initialize(childEntryData, isNew);
+                    childEntry.Initialize(childEntryData, context, isNew);
                     AddEntities(childEntry);
                     initialized &= childEntry.IsInitialized;
                 }
@@ -143,7 +153,7 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                         childEntry = collectionEntry.ChildCreator(entityData, childEntryData);
                         collectionEntry.Collection.Add(childEntry);
                     }
-                    childEntry.Initialize(childEntryData, externalData, isNew);
+                    childEntry.Initialize(childEntryData, externalData, context, isNew);
                     AddEntities(childEntry);
                     initialized &= childEntry.IsInitialized;
                 }
@@ -166,13 +176,12 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
             }
         }
 
-        public void RegisterChild<TChild, TChildKey, TChildData>(
-            TChild? child
+        public void RegisterChild<TChildKey, TChildData>(
+            IDataDrivenEntity<TChildKey, TChildData>? child
             , Func<TEntityData, TChildData?> childDataSelector
             , Action<IDataDrivenEntity> removeChild
             , Action<IDataDrivenEntity> setChild
-            , Func<TEntityData, TChild> childCreator)
-            where TChild : IDataDrivenEntity<TChildKey, TChildData>
+            , Func<TEntityData, IDataDrivenEntity<TChildKey, TChildData>> childCreator)
             where TChildKey : notnull
             where TChildData : IEntityData<TChildKey>
         {
@@ -206,14 +215,13 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
             });
         }
 
-        public void RegisterExternalChild<TChild, TChildKey, TChildData, TChildExternalData>(
-            TChild? child
+        public void RegisterExternalChild<TChildKey, TChildData, TChildExternalData>(
+            IDataDrivenEntity<TChildKey, TChildData, TChildExternalData>? child
             , Func<TEntityData, TChildData?> childDataSelector
             , Action<IExternalDataDrivenEntity> removeChild
             , Action<IExternalDataDrivenEntity> setChild
-            , Func<TEntityData, TChild> childCreator
+            , Func<TEntityData, IDataDrivenEntity<TChildKey, TChildData, TChildExternalData>> childCreator
             , Func<TEntityData, TChildExternalData> externalDataProvider)
-            where TChild : IDataDrivenEntity<TChildKey, TChildData, TChildExternalData>
             where TChildKey : notnull
             where TChildData : IEntityData<TChildKey>
             where TChildExternalData : class

@@ -16,10 +16,10 @@ namespace InvoiceSample.Persistence.Tables
     {
         public WarehouseMovement()
         {
-            RegisterExternalChildCollection<WarehouseMovementLine, int, IWarehouseReleaseLine, IMapper>(
+            RegisterExternalChildCollection<WarehouseMovementLine, (string WarehouseReleaseNumber, int Ordinal), IWarehouseReleaseLine, IMapper>(
                 Lines
                 , d => d.Lines
-                , (_, _) => new WarehouseMovementLine()
+                , (_, _) => new WarehouseMovementLine { WarehouseMovement  = this }
                 , (_) => _mapper!
                 );
         }

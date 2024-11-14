@@ -9,10 +9,15 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.SalesOrderAggregate
 {
-    public class SalesOrderLine : ExternalDataDrivenEntity<int, ISalesOrderLine, SalesOrderLineExternalData>
+    public class SalesOrderLine : ExternalDataDrivenEntity<(string SalesOrderNumber, int Ordinal), ISalesOrderLine, SalesOrderLineExternalData>
         , ISalesOrderLine
     {
         private bool _initialized;
+
+        public SalesOrderLine(SalesOrder salesOrder)
+        {
+            SalesOrder = salesOrder;
+        }
 
         public int Ordinal { get; set; }
 
@@ -30,7 +35,7 @@ namespace InvoiceSample.Domain.SalesOrderAggregate
 
         public bool IsService { get; set; }
 
-        public SalesOrder SalesOrder { get; set; } = new();
+        public SalesOrder SalesOrder { get; set; }
 
         public IDocument Document => SalesOrder;
 
@@ -40,12 +45,11 @@ namespace InvoiceSample.Domain.SalesOrderAggregate
 
         public override ISalesOrderLine GetEntityData() => this;
 
-        public override int GetKey() => Ordinal;
+        public override (string SalesOrderNumber, int Ordinal) GetKey() => (SalesOrder.Number, Ordinal);
 
         protected override void SelfInitialize(ISalesOrderLine entityData, SalesOrderLineExternalData externalData)
         {
             externalData.Mapper.Map(entityData, this);
-            SalesOrder = externalData.SalesOrder;
             _initialized = true;
         }
 
@@ -54,7 +58,6 @@ namespace InvoiceSample.Domain.SalesOrderAggregate
 
     public record SalesOrderLineExternalData
     {
-        public required SalesOrder SalesOrder { get; set; }
         public required IMapper Mapper { get; set; }
     }
 }

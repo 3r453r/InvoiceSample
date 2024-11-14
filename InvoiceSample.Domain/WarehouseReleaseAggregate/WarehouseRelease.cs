@@ -17,21 +17,20 @@ namespace InvoiceSample.Domain.WarehouseReleaseAggregate
 
         public WarehouseRelease()
         {
-            RegisterExternalChildCollection<WarehouseReleaseLine, int, IWarehouseReleaseLine, WarehouseReleaseLineExternalData>(
+            RegisterExternalChildCollection<WarehouseReleaseLine, (string WarehouseReleaseNumber, int Ordinal), IWarehouseReleaseLine, WarehouseReleaseLineExternalData>(
                 Lines
                 , wd => wd.Lines
-                , (_, _) => new WarehouseReleaseLine()
+                , (_, _) => new WarehouseReleaseLine(this)
                 , (_) => new WarehouseReleaseLineExternalData 
                 {
                     Mapper = _mapper ?? throw new ArgumentNullException(nameof(Mapper)),
-                    WarehouseRelease = this,
                 });    
         }
 
         public WarehouseRelease(IWarehouseReleaseData wd, IMapper mapper) : this()
         {
             _mapper = mapper;
-            Initialize(wd, mapper, true);
+            Initialize(wd, mapper, null, true);
             _initialized = true;
         }
 

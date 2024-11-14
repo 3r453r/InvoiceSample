@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using InvoiceSample.DataDrivenEntity;
 using InvoiceSample.DataDrivenEntity.Implementations;
+using InvoiceSample.DataDrivenEntity.Implementations.Helpers;
 using InvoiceSample.Domain.Exceptions;
 using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
+using MassTransit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,24 +26,29 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 
         protected Invoice()
         {
-            RegisterExternalChildCollection<InvoiceLine, int, IInvoiceLine, InvoiceLineExternalData>(
+            Id = NewId.NextSequentialGuid();
+
+            RegisterExternalChildCollection<SalesOrder, string, ISalesOrderData, IMapper>(
+        _salesOrders
+        , d => d.SalesOrders
+        , (_, _) => new SalesOrder()
+        , (_) => Mapper
+    );
+
+            RegisterExternalChildCollection<InvoiceLine, (string InvoiceNumber, int Ordinal), IInvoiceLine, InvoiceLineExternalData>(
                     _lines
                     , d => d.Lines
-                    , (_, _) => new InvoiceLine()
-                    , (_) => new InvoiceLineExternalData { Invoice = this, Mapper = Mapper}
+                    , (_, _) => new InvoiceLine(this)
+                    , (_) => new InvoiceLineExternalData { Mapper = Mapper }
                 );
-            RegisterExternalChildCollection<VatSum, VatRate, IVatSum, IMapper>(
+
+            RegisterExternalChildCollection<VatSum, (string InvoiceNumber, VatRate VatRate), IVatSum, IMapper>(
                     _vatSums
                     , d => d.VatSums
-                    , (_, _) => new VatSum()
+                    , (_, _) => new VatSum(this)
                     , (_) => Mapper
                 );
-            RegisterExternalChildCollection<SalesOrder, string, ISalesOrderData, IMapper>(
-                    _salesOrders
-                    , d => d.SalesOrders
-                    , (_, _) => new SalesOrder()
-                    , (_) => Mapper
-                );
+
         }
 
         protected Invoice(IMapper mapper) : this()
@@ -141,21 +148,22 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 
             var i = 1;
             var maxOrdinal = _lines.Any() ? _lines.Max(l => l.Ordinal) : 0;
-            _lines.AddRange(warehouseRelease.Lines
-                .Where(l => !existingOrdinals.Contains(l.Ordinal))
-                .Select(l => new InvoiceLine
-                {
-                    Invoice = this,
-                    Ordinal = maxOrdinal + i++,
-                    GrossValue = l.GrossValue,
-                    NetValue = l.NetValue,
-                    ProductId = l.ProductId,
-                    Quantity = l.Quantity,
-                    VatRate = l.VatRate,
-                    VatValue = l.VatValue,
-                    WarehouseReleaseLine = l,
-                    SalesOrderLine = salesOrder.Lines.FirstOrDefault(sol => sol.Ordinal == l.SalesOrderLineOrdinal)
-                }));
+            foreach(var line in warehouseRelease.Lines
+                .Where(l => !existingOrdinals.Contains(l.Ordinal)))
+            {
+                var invoiceLine = new InvoiceLine(this);
+                invoiceLine.Ordinal = maxOrdinal + i++;
+                invoiceLine.GrossValue = line.GrossValue;
+                invoiceLine.NetValue = line.NetValue;
+                invoiceLine.ProductId = line.ProductId;
+                invoiceLine.Quantity = line.Quantity;
+                invoiceLine.VatRate = line.VatRate;
+                invoiceLine.VatValue = line.VatValue;
+                invoiceLine.WarehouseReleaseLine = line;
+                invoiceLine.SalesOrderLine = salesOrder.Lines.FirstOrDefault(sol => sol.Ordinal == line.SalesOrderLineOrdinal);
+
+                _lines.Add(invoiceLine);
+            }
 
             UpdateTotals();
         }
@@ -177,13 +185,12 @@ namespace InvoiceSample.Domain.InvoiceAggregate
                 var vatSum = _vatSums.FirstOrDefault(vs => vs.VatRate == group.Key);
                 if (vatSum == null) 
                 {
-                    vatSum = new VatSum
-                    {
-                        VatRate = group.Key,
-                        GrossValue = group.Sum(l => l.GrossValue),
-                        NetValue = group.Sum(l => l.NetValue),
-                        VatValue = group.Sum(l => l.VatValue)
-                    };
+                    vatSum = new VatSum(this);
+                    vatSum.VatRate = group.Key;
+                    vatSum.GrossValue = group.Sum(l => l.GrossValue);
+                    vatSum.NetValue = group.Sum(l => l.NetValue);
+                    vatSum.VatValue = group.Sum(l => l.VatValue);
+
                     _vatSums.Add(vatSum);
                 }
                 else

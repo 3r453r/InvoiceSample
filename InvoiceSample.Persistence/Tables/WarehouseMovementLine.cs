@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class WarehouseMovementLine : Entity<WarehouseMovementLine, int, IWarehouseReleaseLine>, IWarehouseReleaseLine
+    public class WarehouseMovementLine : Entity<WarehouseMovementLine, (string WarehouseReleaseNumber, int Ordinal), IWarehouseReleaseLine>, IWarehouseReleaseLine
     {
         public WarehouseMovementLine()
         {
         }
 
-        public WarehouseMovement WarehouseMovement { get; set; } = new();
+        public required WarehouseMovement WarehouseMovement { get; set; }
         IWarehouseReleaseData IWarehouseReleaseLine.WarehouseRelease => WarehouseMovement;
         public IDocument Document => WarehouseMovement;
 
@@ -43,12 +43,13 @@ namespace InvoiceSample.Persistence.Tables
 
         public VatRate VatRate { get; set; }
 
-        object IEntityData.GetKey() => Ordinal;
-
         public override IWarehouseReleaseLine GetEntityData() => this;
 
-        public override object GetKey() => Ordinal;
+        public override object GetKey() => (WarehouseMovement.Number, Ordinal);
 
-        int IEntityData<int>.GetKey() => Ordinal;
+        (string WarehouseReleaseNumber, int Ordinal) IEntityData<(string WarehouseReleaseNumber, int Ordinal)>.GetKey()
+        {
+            return (WarehouseMovement.Number, Ordinal);
+        }
     }
 }

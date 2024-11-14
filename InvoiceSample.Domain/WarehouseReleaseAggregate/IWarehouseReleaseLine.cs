@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.WarehouseReleaseAggregate
 {
-    public interface IWarehouseReleaseLine : IDocumentLine, IEntityData<int>
+    public interface IWarehouseReleaseLine : IDocumentLine, IEntityData<(string WarehouseReleaseNumber, int Ordinal)>
     {
         IWarehouseReleaseData WarehouseRelease { get; }
         int? SalesOrderLineOrdinal { get; }

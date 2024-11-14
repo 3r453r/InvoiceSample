@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.SalesOrderAggregate
 {
-    public interface ISalesOrderLine : IDocumentLine, IEntityData<int>
+    public interface ISalesOrderLine : IDocumentLine, IEntityData<(string SalesOrderNumber, int Ordinal)>
     {
         ISalesOrderData SalesOrder { get; }
         bool IsService { get; }

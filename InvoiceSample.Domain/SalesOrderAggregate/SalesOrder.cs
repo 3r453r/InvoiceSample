@@ -21,13 +21,12 @@ namespace InvoiceSample.Domain.SalesOrderAggregate
 
         public SalesOrder()
         {
-            RegisterExternalChildCollection<SalesOrderLine, int, ISalesOrderLine, SalesOrderLineExternalData>(
+            RegisterExternalChildCollection<SalesOrderLine, (string SalesOrderNumber, int Ordinal), ISalesOrderLine, SalesOrderLineExternalData>(
                     Lines
                     , so => so.Lines
-                    , (_, _) => new SalesOrderLine()
+                    , (_, _) => new SalesOrderLine(this)
                     , (_) => new SalesOrderLineExternalData { 
                         Mapper = _mapper ?? throw new ArgumentNullException(nameof(_mapper)),
-                        SalesOrder = this,
                     }
                 );
 

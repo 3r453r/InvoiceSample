@@ -3,41 +3,37 @@ using InvoiceSample.DataDrivenEntity;
 using InvoiceSample.DataDrivenEntity.Implementations;
 using InvoiceSample.Domain.SalesOrderAggregate;
 using InvoiceSample.Domain.WarehouseReleaseAggregate;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.InvoiceAggregate
 {
-    public class InvoiceLine : ExternalDataDrivenEntity<int, IInvoiceLine, InvoiceLineExternalData>
+    public class InvoiceLine : ExternalDataDrivenEntity<(string InvoiceNumber, int Ordinal), IInvoiceLine, InvoiceLineExternalData>
         , IInvoiceLine
     {
         private IMapper? _mapper;
-        public InvoiceLine()
+        public InvoiceLine(Invoice invoice)
         {
-            RegisterExternalChild<SalesOrderLine, int, ISalesOrderLine, SalesOrderLineExternalData>(
+            Invoice = invoice;
+
+            RegisterExternalChild(
                SalesOrderLine
                , il => il.SalesOrderLine
                , (p) => { SalesOrderLine = null; }
                , (p) => { SalesOrderLine = (SalesOrderLine)p; }
-               , (_) => new SalesOrderLine(), (data) => new SalesOrderLineExternalData 
+               , (data) => new SalesOrderLine(Invoice.SalesOrders.First(so => so.Number == data.SalesOrderLine!.Document.Number))
+               , (data) => new SalesOrderLineExternalData 
                {
-                   SalesOrder = Invoice.SalesOrders.First(so => so.Number == data.Invoice.Number),
                    Mapper = _mapper ?? throw new ArgumentNullException(nameof(Mapper)),
                });
 
-            RegisterExternalChild<WarehouseReleaseLine, int, IWarehouseReleaseLine, WarehouseReleaseLineExternalData>(
+            RegisterExternalChild(
                WarehouseReleaseLine
                , il => il.WarehouseReleaseLine
                , (p) => { WarehouseReleaseLine = null; }
                , (p) => { WarehouseReleaseLine = (WarehouseReleaseLine)p; }
-               , (_) => new WarehouseReleaseLine()
+               , (data) => new WarehouseReleaseLine(Invoice.SalesOrders.SelectMany(so => so.WarehouseReleases)
+                    .First(wr => wr.Number == data.WarehouseReleaseLine!.WarehouseRelease.Number))
                , (data) => new WarehouseReleaseLineExternalData
                {
-                   WarehouseRelease = Invoice.SalesOrders.SelectMany(so => so.WarehouseReleases)
-                    .First(wr => wr.Number == data.WarehouseReleaseLine!.WarehouseRelease.Number),
                    Mapper = _mapper ?? throw new ArgumentNullException(nameof(Mapper)),
                });
         }
@@ -61,7 +57,7 @@ namespace InvoiceSample.Domain.InvoiceAggregate
         public WarehouseReleaseLine? WarehouseReleaseLine { get; set; }
         IWarehouseReleaseLine? IInvoiceLine.WarehouseReleaseLine => WarehouseReleaseLine;
 
-        public Invoice Invoice { get; set; } = new AutomaticInvoice();
+        public Invoice Invoice { get; set; }
         public IDocument Document => Invoice;
         IInvoiceData IInvoiceLine.Invoice => Invoice;
 
@@ -72,20 +68,19 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 
         public override IInvoiceLine GetEntityData() => this;
 
-        public override int GetKey() => Ordinal;
+        public override (string InvoiceNumber, int Ordinal) GetKey() => (Invoice.Number, Ordinal);
 
         protected override void SelfInitialize(IInvoiceLine entityData, InvoiceLineExternalData externalData)
         {
-            Invoice = externalData.Invoice;
-            externalData.Mapper.Map(entityData, this);
+            _mapper = externalData.Mapper;
+            _mapper.Map(entityData, this);
         }
 
-        object IEntityData.GetKey() => Ordinal;
+        object IEntityData.GetKey() => (Invoice.Number, Ordinal);
     }
 
     public record InvoiceLineExternalData
     {
-        public required Invoice Invoice { get; set; }
         public required IMapper Mapper { get; set; }
     }
 }

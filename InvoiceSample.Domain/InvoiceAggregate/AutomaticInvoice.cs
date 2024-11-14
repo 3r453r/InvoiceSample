@@ -31,18 +31,16 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 
             foreach (var salesOrderLine in SalesOrder.Lines.Where(l => l.IsService))
             {
-                _lines.Add(new InvoiceLine
-                {
-                    Invoice = this,
-                    SalesOrderLine = salesOrderLine,
-                    GrossValue = salesOrderLine.GrossValue,
-                    NetValue = salesOrderLine.NetValue,
-                    Ordinal = maxOrdinal + i++,
-                    ProductId = salesOrderLine.ProductId,
-                    Quantity = salesOrderLine.Quantity,
-                    VatRate = salesOrderLine.VatRate,
-                    VatValue = salesOrderLine.VatValue,                  
-                });              
+                var invoiceLine = new InvoiceLine(this);
+                invoiceLine.SalesOrderLine = salesOrderLine;
+                invoiceLine.GrossValue = salesOrderLine.GrossValue;
+                invoiceLine.NetValue = salesOrderLine.NetValue;
+                invoiceLine.Ordinal = maxOrdinal + i++;
+                invoiceLine.ProductId = salesOrderLine.ProductId;
+                invoiceLine.Quantity = salesOrderLine.Quantity;
+                invoiceLine.VatRate = salesOrderLine.VatRate;
+                invoiceLine.VatValue = salesOrderLine.VatValue; 
+                _lines.Add(invoiceLine);              
             }
 
             UpdateTotals();

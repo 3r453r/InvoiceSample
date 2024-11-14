@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.InvoiceAggregate
 {
-    public interface IVatSum : IEntityData<VatRate>
+    public interface IVatSum : IEntityData<(string InvoiceNumber, VatRate VatRate)>
     {
         VatRate VatRate { get; }
         decimal NetValue { get; }
@@ -17,11 +17,17 @@ namespace InvoiceSample.Domain.InvoiceAggregate
         decimal VatValue { get; }
     }
 
-    public class VatSum : ExternalDataDrivenEntity<VatRate, IVatSum, IMapper>
+    public class VatSum : ExternalDataDrivenEntity<(string InvoiceNumber, VatRate VatRate), IVatSum, IMapper>
         , IVatSum
     {
         private bool _initialized;
 
+        public VatSum(Invoice invoice)
+        {
+            Invoice = invoice;
+        }
+
+        public Invoice Invoice { get; set; }
         public VatRate VatRate { get; set; }
 
         public decimal NetValue { get; set; }
@@ -32,7 +38,7 @@ namespace InvoiceSample.Domain.InvoiceAggregate
 
         public override IVatSum GetEntityData() => this;
 
-        public override VatRate GetKey() => VatRate;
+        public override (string InvoiceNumber, VatRate VatRate) GetKey() => (Invoice.Number, VatRate  = VatRate);
 
         protected override void SelfInitialize(IVatSum entityData, IMapper externalData)
         {

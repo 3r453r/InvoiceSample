@@ -2,7 +2,7 @@
 {
     public interface IExternalDataDrivenEntity : IDataDrivenEntityBase
     {
-        void Initialize(object entityData, object externalData, bool isNew = false);
+        void Initialize(object entityData, object externalData, IInitializationContext? initializationContext, bool isNew = false);
     }
 
     public interface IDataDrivenEntity<TKey, TEntityData, TExternalData> : IExternalDataDrivenEntity
@@ -10,7 +10,7 @@
     where TKey : notnull
     where TExternalData : class
     {
-        void Initialize(TEntityData entityData, TExternalData externalData, bool isNew = false);
+        void Initialize(TEntityData entityData, TExternalData externalData, IInitializationContext? context = null, bool isNew = false);
         new TEntityData GetEntityData();
     }
 }

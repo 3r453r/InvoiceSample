@@ -2,6 +2,7 @@
 using InvoiceSample.Application.Persistence;
 using InvoiceSample.DataDrivenEntity.Extensions;
 using InvoiceSample.Domain.InvoiceAggregate;
+using InvoiceSample.Persistence.Tables;
 using Microsoft.EntityFrameworkCore;
 using InvoiceTable = InvoiceSample.Persistence.Tables.Invoice;
 
@@ -84,6 +85,30 @@ namespace InvoiceSample.Persistence.ApplicationImplementtion.Repositiories
         public async Task Update(IInvoiceData entity)
         {
             await AddOrUpdateEntity(entity, _mapper);
+        }
+
+        protected override async Task SetCustomNavigations(InvoiceTable entity, IInvoiceData entityData)
+        {
+            var warehouseMovementDatas = entityData.SalesOrders.SelectMany(so => so.WarehouseReleases);
+            foreach(var warehouseMovement in entity.SalesOrders.SelectMany(so => so.WarehouseReleases))
+            {
+                var data = warehouseMovementDatas.First(wm => wm.GetKey() == (string)warehouseMovement.GetKey());
+                var salesOrder = entity.SalesOrders.FirstOrDefault(so => so.Number == data.SalesOrderNumber);
+                if(salesOrder == null)
+                {
+                    salesOrder = await _context.SalesOrders
+                        .Include(so => so.Lines)
+                        .FirstAsync(so => so.Number == data.SalesOrderNumber);
+                }
+                warehouseMovement.SalesOrder = salesOrder;
+
+                foreach(var wmLine in warehouseMovement.Lines)
+                {
+                    var wmLineData = data.Lines.First(l => l.Ordinal == wmLine.Ordinal);
+
+                    wmLine.SalesOrderLine = salesOrder.Lines.FirstOrDefault(l => l.Ordinal == wmLineData.SalesOrderLineOrdinal);
+                }
+            }   
         }
     }
 }

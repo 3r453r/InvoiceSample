@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Persistence.Tables
 {
-    public class SalesOrderLine : Entity<SalesOrderLine, int, ISalesOrderLine>, ISalesOrderLine
+    public class SalesOrderLine : Entity<SalesOrderLine, (string SalesOrderNumber, int Ordinal), ISalesOrderLine>, ISalesOrderLine
     {
-        public SalesOrder SalesOrder { get; set; } = new SalesOrder();
+        public required SalesOrder SalesOrder { get; set; }
         ISalesOrderData ISalesOrderLine.SalesOrder => SalesOrder;
         public IDocument Document => SalesOrder;
 
@@ -36,12 +36,15 @@ namespace InvoiceSample.Persistence.Tables
 
         public VatRate VatRate { get; set; }
 
-        object IEntityData.GetKey() => Ordinal;
+        object IEntityData.GetKey() => (SalesOrder.Number, Ordinal);
 
         public override ISalesOrderLine GetEntityData() => this;
 
-        public override object GetKey() => Ordinal;
+        public override object GetKey() => (SalesOrder.Number, Ordinal);
 
-        int IEntityData<int>.GetKey() => Ordinal;
+        (string SalesOrderNumber, int Ordinal) IEntityData<(string SalesOrderNumber, int Ordinal)>.GetKey()
+        {
+            return (SalesOrder.Number, Ordinal);
+        }
     }
 }

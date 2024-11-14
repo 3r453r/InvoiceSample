@@ -31,6 +31,7 @@ namespace InvoiceSample.Persistence.Tables
         private List<DataDrivenEntity.Aggregates.CollectionEntry> _collectionEntries = [];
         private List<ExternalCollectionEntry> _externalCollectionEntries = [];
         private HashSet<IDataDrivenEntityBase> _allEntities = new();
+        private IInitializationContext? _initializationContext;
 
         protected IMapper? _mapper;
 
@@ -47,18 +48,26 @@ namespace InvoiceSample.Persistence.Tables
         public abstract TEntityData GetEntityData();
         public abstract object GetKey();
 
-        public void Initialize(TEntityData entityData, IMapper externalData, bool isNew = false)
+        public void Initialize(TEntityData entityData, IMapper externalData, IInitializationContext? context = null, bool isNew = false)
         {
             _mapper = externalData;
             _mapper.Map(entityData, this);
-            IsInitialized = InitializeAggregate(entityData);
+
+            _initializationContext = context is null ? new InitializationContext() : context;
+            if (_initializationContext.IsInitialized(this))
+            {
+                return;
+            }
+            _initializationContext.Add(this);
+
+            IsInitialized = InitializeAggregate(entityData, _initializationContext);
         }
 
-        public void Initialize(object entityData, object externalData, bool isNew = false)
+        public void Initialize(object entityData, object externalData, IInitializationContext? initializationContext, bool isNew = false)
         {
             if (entityData is TEntityData enD && externalData is IMapper exD)
             {
-                Initialize(enD, exD, isNew);
+                Initialize(enD, exD, initializationContext, isNew);
             }
             else
             {
@@ -66,7 +75,7 @@ namespace InvoiceSample.Persistence.Tables
             }
         }
 
-        private bool InitializeAggregate(TEntityData entityData)
+        private bool InitializeAggregate(TEntityData entityData, IInitializationContext context)
         {
             var initialized = true;
             foreach (var childEntry in _childEntries)
@@ -80,7 +89,7 @@ namespace InvoiceSample.Persistence.Tables
                     }
                     else
                     {
-                        childEntry.Entity.Initialize(childData);
+                        childEntry.Entity.Initialize(childData, context);
                         AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
@@ -88,10 +97,21 @@ namespace InvoiceSample.Persistence.Tables
                 else if (childData is not null)
                 {
                     var newEntity = childEntry.ChildCreator(entityData);
-                    newEntity.Initialize(childData);
-                    newEntity.IsNew = true;
-                    AddEntities(newEntity);
+                    var existingEntity = context.GetInitialized((newEntity.GetType(), childData.GetKey()));
+
+
+                    if (existingEntity != null)
+                    {
+                        newEntity = (IDataDrivenEntity)existingEntity;
+                    }
+                    else
+                    {
+                        newEntity.IsNew = true;
+                        newEntity.Initialize(childData, context);
+                    }
                     childEntry.SetChild(newEntity);
+                    AddEntities(newEntity);
+
                     initialized &= newEntity.IsInitialized;
                 }
             }
@@ -108,7 +128,7 @@ namespace InvoiceSample.Persistence.Tables
                     }
                     else
                     {
-                        childEntry.Entity.Initialize(entityData, externalData);
+                        childEntry.Entity.Initialize(entityData, externalData, context);
                         AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
@@ -116,10 +136,21 @@ namespace InvoiceSample.Persistence.Tables
                 else if (childData is not null)
                 {
                     var newEntity = childEntry.ChildCreator(entityData);
-                    newEntity.Initialize(childData, externalData);
-                    newEntity.IsNew = true;
-                    childEntry.SetChild(newEntity);
+                    var existingEntity = context.GetInitialized((newEntity.GetType(), childData.GetKey()));
+
+
+                    if (existingEntity != null)
+                    {
+                        newEntity = (IExternalDataDrivenEntity)existingEntity;
+                    }
+                    else
+                    {
+                        newEntity.IsNew = true;
+                        newEntity.Initialize(childData, externalData, context);
+                    }
                     AddEntities(newEntity);
+                    childEntry.SetChild(newEntity);
+
                     initialized &= newEntity.IsInitialized;
                 }
             }
@@ -136,11 +167,20 @@ namespace InvoiceSample.Persistence.Tables
                     if (childEntry is null)
                     {
                         childEntry = collectionEntry.ChildCreator(entityData, childEntryData);
-                        childEntry.IsNew = true;
+
+                        var existingEntity = context.GetInitialized((childEntry.GetType(), childEntryData.GetKey()));
+                        if (existingEntity is not null)
+                        {
+                            childEntry = (IDataDrivenEntity)existingEntity;
+                        }
+                        else
+                        {
+                            childEntry.IsNew = true;
+                        }
+                        AddEntities(childEntry);
                         collectionEntry.Collection.Add(childEntry);
                     }
-                    childEntry.Initialize(childEntryData);
-                    AddEntities(childEntry);
+                    childEntry.Initialize(childEntryData, context);
                     initialized &= childEntry.IsInitialized;
                 }
 
@@ -163,11 +203,21 @@ namespace InvoiceSample.Persistence.Tables
                     if (childEntry is null)
                     {
                         childEntry = collectionEntry.ChildCreator(entityData, childEntryData);
-                        childEntry.IsNew = true;
+
+                        var existingEntity = context.GetInitialized((childEntry.GetType(), childEntryData.GetKey()));
+                        if (existingEntity is not null)
+                        {
+                            childEntry = (IExternalDataDrivenEntity)existingEntity;
+                        }
+                        else
+                        {
+                            childEntry.IsNew = true;
+                        }
+                        AddEntities(childEntry);
                         collectionEntry.Collection.Add(childEntry);
                     }
-                    childEntry.Initialize(childEntryData, externalData);
-                    AddEntities(childEntry);
+                    childEntry.Initialize(childEntryData, externalData, context);
+
                     initialized &= childEntry.IsInitialized;
                 }
 
@@ -191,13 +241,12 @@ namespace InvoiceSample.Persistence.Tables
             }
         }
 
-        public void RegisterChild<TChild, TChildKey, TChildData>(
-            TChild? child
+        public void RegisterChild<TChildKey, TChildData>(
+            IDataDrivenEntity<TChildKey, TChildData>? child
             , Func<TEntityData, TChildData?> childDataSelector
             , Action<IDataDrivenEntity> removeChild
             , Action<IDataDrivenEntity> setChild
-            , Func<TEntityData, TChild> childCreator)
-            where TChild : IDataDrivenEntity<TChildKey, TChildData>
+            , Func<TEntityData, IDataDrivenEntity<TChildKey, TChildData>> childCreator)
             where TChildKey : notnull
             where TChildData : IEntityData<TChildKey>
         {
@@ -231,14 +280,13 @@ namespace InvoiceSample.Persistence.Tables
             });
         }
 
-        public void RegisterExternalChild<TChild, TChildKey, TChildData, TChildExternalData>(
-            TChild? child
+        public void RegisterExternalChild<TChildKey, TChildData, TChildExternalData>(
+            IDataDrivenEntity<TChildKey, TChildData, TChildExternalData>? child
             , Func<TEntityData, TChildData?> childDataSelector
             , Action<IExternalDataDrivenEntity> removeChild
             , Action<IExternalDataDrivenEntity> setChild
-            , Func<TEntityData, TChild> childCreator
+            , Func<TEntityData, IDataDrivenEntity<TChildKey, TChildData, TChildExternalData>> childCreator
             , Func<TEntityData, TChildExternalData> externalDataProvider)
-            where TChild : IDataDrivenEntity<TChildKey, TChildData, TChildExternalData>
             where TChildKey : notnull
             where TChildData : IEntityData<TChildKey>
             where TChildExternalData : class

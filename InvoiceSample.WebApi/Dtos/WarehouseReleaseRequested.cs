@@ -20,10 +20,6 @@ namespace InvoiceSample.WebApi.Dtos
         [Required]
         public Guid CustomerId { get; set; }
 
-        public string GetKey() => Number;
-
-        object IEntityData.GetKey() => Number;
-
         public class WarehouseReleaseLineData : IWarehouseReleaseLine
         {
             public WarehouseReleaseLineData(WarehouseReleaseRequested warehouseRelease, WarehouseReleaseLine warehouseReleaseLine)
@@ -59,9 +55,9 @@ namespace InvoiceSample.WebApi.Dtos
 
             public IDocument Document => WarehouseRelease;
 
-            public int GetKey() => Ordinal;
+            public (string WarehouseReleaseNumber, int Ordinal) GetKey() => (WarehouseRelease.Number, Ordinal);
 
-            object IEntityData.GetKey() => Ordinal;
+            object IEntityData.GetKey() => (WarehouseRelease.Number, Ordinal);
         }
 
         public class WarehouseReleaseLine
@@ -89,5 +85,9 @@ namespace InvoiceSample.WebApi.Dtos
             [Required]
             public VatRate VatRate { get; set; }
         }
+
+        string IEntityData<string>.GetKey() => Number;
+
+        object IEntityData.GetKey() => Number;
     }
 }

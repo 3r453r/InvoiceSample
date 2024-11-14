@@ -18,26 +18,28 @@ namespace InvoiceSample.Persistence.Tables
     {
         public Invoice()
         {
-            RegisterExternalChildCollection<InvoiceLine, int, IInvoiceLine, IMapper>(
-        Lines
-        , d => d.Lines
-        , (_, _) => new InvoiceLine()
+            RegisterExternalChildCollection<SalesOrder, string, ISalesOrderData, IMapper>(
+        SalesOrders
+        , d => d.SalesOrders
+        , (_, _) => new SalesOrder()
         , (_) => _mapper!
     );
 
-            RegisterExternalChildCollection<InvoiceVatSum, VatRate, IVatSum, IMapper>(
+            RegisterExternalChildCollection<InvoiceLine, (string InvoiceNumber, int Ordinal), IInvoiceLine, IMapper>(
+        Lines
+        , d => d.Lines
+        , (_, _) => new InvoiceLine { Invoice = this }
+        , (_) => _mapper!
+    );
+
+            RegisterExternalChildCollection<InvoiceVatSum, (string InvoiceNumber, VatRate VatRate), IVatSum, IMapper>(
                     VatSums
                     , d => d.VatSums
-                    , (_, _) => new InvoiceVatSum()
+                    , (_, _) => new InvoiceVatSum { Invoice = this }
                     , (_) => _mapper!
                 );
 
-            RegisterExternalChildCollection<SalesOrder, string, ISalesOrderData, IMapper>(
-                    SalesOrders
-                    , d => d.SalesOrders
-                    , (_, _) => new SalesOrder()
-                    , (_) => _mapper!
-                );
+
         }
 
         [Precision(18,2)]

@@ -9,9 +9,14 @@ using System.Threading.Tasks;
 
 namespace InvoiceSample.Domain.WarehouseReleaseAggregate
 {
-    public class WarehouseReleaseLine : ExternalDataDrivenEntity<int, IWarehouseReleaseLine, WarehouseReleaseLineExternalData>
+    public class WarehouseReleaseLine : ExternalDataDrivenEntity<(string WarehouseReleaseNumber, int Ordinal), IWarehouseReleaseLine, WarehouseReleaseLineExternalData>
         , IWarehouseReleaseLine 
     {
+        public WarehouseReleaseLine(WarehouseRelease warehouseRelease)
+        {
+            WarehouseRelease = warehouseRelease;
+        }
+
         private bool _initialized;
 
         public int Ordinal { get; set; }
@@ -30,7 +35,7 @@ namespace InvoiceSample.Domain.WarehouseReleaseAggregate
 
         public int? SalesOrderLineOrdinal { get; set; }
 
-        public WarehouseRelease WarehouseRelease { get; private set; } = new WarehouseRelease();
+        public WarehouseRelease WarehouseRelease { get; private set; }
         public IDocument Document => WarehouseRelease;
 
         protected override bool SelfInitialzed => _initialized;
@@ -39,14 +44,13 @@ namespace InvoiceSample.Domain.WarehouseReleaseAggregate
 
         public override IWarehouseReleaseLine GetEntityData() => this;
 
-        public override int GetKey() => Ordinal;
+        public override (string WarehouseReleaseNumber, int Ordinal) GetKey() => (WarehouseRelease.Number, Ordinal);
         object IEntityData.GetKey() => Ordinal;
 
         protected override void SelfInitialize(IWarehouseReleaseLine entityData
             , WarehouseReleaseLineExternalData externalData)
         {
             externalData.Mapper.Map(entityData, this);
-            WarehouseRelease = externalData.WarehouseRelease;
             _initialized = true;
         }
     }
@@ -54,6 +58,5 @@ namespace InvoiceSample.Domain.WarehouseReleaseAggregate
     public record WarehouseReleaseLineExternalData
     {
         public required IMapper Mapper { get; init; }
-        public required WarehouseRelease WarehouseRelease { get; init; }
     }
 }

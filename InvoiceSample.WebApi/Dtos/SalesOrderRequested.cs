@@ -75,8 +75,12 @@ namespace InvoiceSample.WebApi.Dtos
 
         public IDocument Document => SalesOrder;
 
-        public int GetKey() => Ordinal;
-        object IEntityData.GetKey() => Ordinal;
+        (string SalesOrderNumber, int Ordinal) IEntityData<(string SalesOrderNumber, int Ordinal)>.GetKey()
+        {
+            return (SalesOrder.Number, Ordinal);
+        }
+
+        object IEntityData.GetKey() => (SalesOrder.Number, Ordinal);
     }
 
     public class SalesOrderLine
