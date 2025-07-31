@@ -228,6 +228,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
                     Created = dateTime,
                     CreatedBy = 1,
                     Name = "a",
+                    IsNew = false,
                 };
 
                 invoice.Lines.Add(new InvoiceLine
@@ -236,6 +237,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
                     Created = dateTime,
                     CreatedBy = 1,
                     Name = "a",
+                    IsNew = false,
                 });
 
                 invoice.WarehouseReturns.Add(new WarehouseMovement
@@ -244,6 +246,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
                     Created = dateTime,
                     CreatedBy = 1,
                     Name = "a",
+                    IsNew = false,
                 });
             };
 

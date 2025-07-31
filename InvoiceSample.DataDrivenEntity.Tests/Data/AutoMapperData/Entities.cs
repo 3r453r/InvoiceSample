@@ -116,6 +116,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
         public string Name { get; set; } = "";
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
+        public bool IsNew { get; set; }
     }
 
     public class ParentData : IParentData
@@ -128,6 +129,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.AutoMapperData
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
 
+        public bool IsNew { get; set; }
         public Child? Child { get; set; }
         public DataDrivenChild? DataDrivenChild { get; set; }
         public List<DataDrivenChild> DataDrivenChildren { get; set; } = [];

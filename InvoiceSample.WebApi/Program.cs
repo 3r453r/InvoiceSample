@@ -11,6 +11,7 @@ using InvoiceSample.Persistence.Tables;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -62,6 +63,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseMigrations();
+if (!app.Environment.IsEnvironment("Testing")) // Check against the name set in the test
+{
+    app.UseMigrations();
+}
 
 app.Run();
+
+public partial class Program { }

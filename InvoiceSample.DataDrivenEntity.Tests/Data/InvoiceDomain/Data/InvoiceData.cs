@@ -9,7 +9,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
         public string Number { get; set; } = "";
-
+        public bool IsNew { get; set; }
         public Guid GetKey() => Id;
 
         object IEntityData.GetKey() => Id;
@@ -54,7 +54,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
         public string Number { get; set; }
-
+        public bool IsNew { get; set; }
         public Guid GetKey() => Id;
 
         object IEntityData.GetKey() => Id;

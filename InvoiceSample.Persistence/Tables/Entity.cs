@@ -44,7 +44,7 @@ namespace InvoiceSample.Persistence.Tables
         [NotMapped]
         public bool IsNew { get; set; }
 
-        public IEnumerable<IDataDrivenEntityBase> GetAllEntities() => _allEntities;
+        public IEnumerable<IDataDrivenEntityBase> GetAllEntities(bool includeSelf = false) => _allEntities;
         public abstract TEntityData GetEntityData();
         public abstract object GetKey();
 
@@ -89,7 +89,7 @@ namespace InvoiceSample.Persistence.Tables
                     }
                     else
                     {
-                        childEntry.Entity.Initialize(childData, context);
+                        childEntry.Entity.Initialize(childData, context, false);
                         AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
@@ -107,7 +107,7 @@ namespace InvoiceSample.Persistence.Tables
                     else
                     {
                         newEntity.IsNew = true;
-                        newEntity.Initialize(childData, context);
+                        newEntity.Initialize(childData, context, false);
                     }
                     childEntry.SetChild(newEntity);
                     AddEntities(newEntity);
@@ -128,7 +128,7 @@ namespace InvoiceSample.Persistence.Tables
                     }
                     else
                     {
-                        childEntry.Entity.Initialize(entityData, externalData, context);
+                        childEntry.Entity.Initialize(entityData, externalData, context, false);
                         AddEntities(childEntry.Entity);
                         initialized &= childEntry.Entity.IsInitialized;
                     }
@@ -146,7 +146,7 @@ namespace InvoiceSample.Persistence.Tables
                     else
                     {
                         newEntity.IsNew = true;
-                        newEntity.Initialize(childData, externalData, context);
+                        newEntity.Initialize(childData, externalData, context, false);
                     }
                     AddEntities(newEntity);
                     childEntry.SetChild(newEntity);
@@ -180,7 +180,7 @@ namespace InvoiceSample.Persistence.Tables
                         AddEntities(childEntry);
                         collectionEntry.Collection.Add(childEntry);
                     }
-                    childEntry.Initialize(childEntryData, context);
+                    childEntry.Initialize(childEntryData, context, false);
                     initialized &= childEntry.IsInitialized;
                 }
 
@@ -216,7 +216,7 @@ namespace InvoiceSample.Persistence.Tables
                         AddEntities(childEntry);
                         collectionEntry.Collection.Add(childEntry);
                     }
-                    childEntry.Initialize(childEntryData, externalData, context);
+                    childEntry.Initialize(childEntryData, externalData, context, false);
 
                     initialized &= childEntry.IsInitialized;
                 }

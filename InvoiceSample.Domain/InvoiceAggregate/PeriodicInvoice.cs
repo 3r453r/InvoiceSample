@@ -61,7 +61,7 @@ namespace InvoiceSample.Domain.InvoiceAggregate
             _salesOrders.Add(salesOrder);
         }
 
-        public void EndPeriod()
+        public virtual void EndPeriod()
         {
             PeriodEndRequested = true;
         }

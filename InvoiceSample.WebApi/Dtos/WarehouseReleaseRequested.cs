@@ -19,6 +19,7 @@ namespace InvoiceSample.WebApi.Dtos
 
         [Required]
         public Guid CustomerId { get; set; }
+        public bool IsNew { get; set; }
 
         public class WarehouseReleaseLineData : IWarehouseReleaseLine
         {
@@ -52,6 +53,8 @@ namespace InvoiceSample.WebApi.Dtos
             public decimal Quantity { get; set; }
 
             public VatRate VatRate { get; set; }
+
+            public bool IsNew { get; set; }
 
             public IDocument Document => WarehouseRelease;
 
