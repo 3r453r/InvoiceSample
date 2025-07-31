@@ -63,7 +63,13 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-if (!app.Environment.IsEnvironment("Testing")) // Check against the name set in the test
+if (app.Environment.IsEnvironment("IntegrationTesting"))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<InvoiceSample.Persistence.InvoiceSampleDbContext>();
+    db.Database.EnsureCreated();
+}
+else
 {
     app.UseMigrations();
 }
