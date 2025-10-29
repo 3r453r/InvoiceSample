@@ -11,6 +11,7 @@ using InvoiceSample.Persistence.Tables;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

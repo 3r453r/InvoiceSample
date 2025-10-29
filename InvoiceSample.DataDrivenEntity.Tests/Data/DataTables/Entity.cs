@@ -9,5 +9,6 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.DataTables
     public abstract class Entity
     {
         public Guid Id { get; set; }
+        public bool IsNew { get; set; }
     }
 }

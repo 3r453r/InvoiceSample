@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvoiceSample.DataDrivenEnt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceSample.DataDrivenEntity.Extensions", "..\InvoiceSample.DataDrivenEntity.Extensions\InvoiceSample.DataDrivenEntity.Extensions.csproj", "{F63332E2-B3A4-4A33-928F-CB9F1EE9C0D3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceSample.WebApi.Tests", "..\InvoiceSample.WebApi.Tests\InvoiceSample.WebApi.Tests.csproj", "{110B374A-4F6F-4BA1-BDB4-B587E2B1EA9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{F63332E2-B3A4-4A33-928F-CB9F1EE9C0D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F63332E2-B3A4-4A33-928F-CB9F1EE9C0D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F63332E2-B3A4-4A33-928F-CB9F1EE9C0D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{110B374A-4F6F-4BA1-BDB4-B587E2B1EA9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{110B374A-4F6F-4BA1-BDB4-B587E2B1EA9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{110B374A-4F6F-4BA1-BDB4-B587E2B1EA9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{110B374A-4F6F-4BA1-BDB4-B587E2B1EA9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

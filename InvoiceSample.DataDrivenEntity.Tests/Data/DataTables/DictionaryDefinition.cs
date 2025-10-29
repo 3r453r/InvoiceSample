@@ -13,7 +13,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.DataTables
         public string Name { get; set; } = "";
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
-
+        public bool IsNew { get; set; }
         public List<DictionaryValueData> Values { get; set; } = [];
         IEnumerable<IDictionaryValueData> IDictionaryDefinitionData.Values => Values;
 

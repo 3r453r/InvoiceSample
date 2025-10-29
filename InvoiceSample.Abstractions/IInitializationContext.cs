@@ -1,4 +1,5 @@
-﻿using System;
+﻿using InvoiceSample.DataDrivenEntity.Implementations.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,5 +14,13 @@ namespace InvoiceSample.DataDrivenEntity
         void Add(IDataDrivenEntityBase entity);
 
         IDataDrivenEntityBase? GetInitialized((Type EntityType, object Key) key);
+
+        IDataDrivenEntityBase? FindByKey<TKey>(TKey key) where TKey : notnull;
+
+        IEnumerable<IDataDrivenEntityBase> GetAllInitializedEntities();
+
+        void SubscribeToInitializationEvents(Action<EntityInitializedEvent> subscriber);
+
+        void UnsubscribeFromInitializationEvents(Action<EntityInitializedEvent> subscriber);
     }
 }

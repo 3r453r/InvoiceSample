@@ -14,7 +14,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public string Name { get; set; } = "";
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
-
+        public bool IsNew { get; set; }
         public bool Equals(IWarehouseMovementData? other) => other is not null && Id == other.Id && Name == other.Name
                 && Created == other.Created && CreatedBy == other.CreatedBy;
 

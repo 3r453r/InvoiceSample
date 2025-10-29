@@ -12,7 +12,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain.Data
         public string Name { get; set; } = "";
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
-
+        public bool IsNew { get; set; }
         public Guid GetKey() => Id;
 
         object IEntityData.GetKey() => Id;

@@ -25,7 +25,7 @@ namespace InvoiceSample.DataDrivenEntity.Tests.Data.InvoiceDomain
         public string Name { get; set; } = "";
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
-        public DictionaryValue Status { get; set; } = new DictionaryValue();
+        public DictionaryValue Status { get; set; } = new DictionaryValue { IsNew = false };
         protected override bool SelfInitialzed => _initialized;
         IDictionaryValueData IInvoiceLineData.Status => Status;
 

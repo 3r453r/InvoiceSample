@@ -7,12 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="13.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.10">
+    <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.3.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,5 +20,7 @@
     <ProjectReference Include="..\InvoiceSample.Domain\InvoiceSample.Domain.csproj" />
     <ProjectReference Include="..\InvoiceSample.Persistence\InvoiceSample.Persistence.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <InternalsVisibleTo Include="InvoiceSample.WebApi.Tests" />
+  </ItemGroup>
 </Project>

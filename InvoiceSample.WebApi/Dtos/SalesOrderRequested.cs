@@ -38,6 +38,7 @@ namespace InvoiceSample.WebApi.Dtos
         public string GetKey() => Number;
 
         object IEntityData.GetKey() => Number;
+        public bool IsNew { get; set; }
     }
 
     public class SalesOrderLineData : ISalesOrderLine
@@ -74,6 +75,8 @@ namespace InvoiceSample.WebApi.Dtos
         public VatRate VatRate { get; set; }
 
         public IDocument Document => SalesOrder;
+
+        public bool IsNew { get; set; }
 
         (string SalesOrderNumber, int Ordinal) IEntityData<(string SalesOrderNumber, int Ordinal)>.GetKey()
         {

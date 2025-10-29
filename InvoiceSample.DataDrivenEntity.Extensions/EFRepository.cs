@@ -10,7 +10,7 @@ namespace InvoiceSample.DataDrivenEntity.Extensions
     where TKey : notnull
     where TEntityData : IEntityData<TKey>
     {
-        private readonly DbContext _dbContext;
+        protected readonly DbContext _dbContext;
 
         protected EFRepository(DbContext dbContext)
         {
@@ -38,7 +38,10 @@ namespace InvoiceSample.DataDrivenEntity.Extensions
                 if (childEntity.IsNew)
                 {
                     var entry = _dbContext.Entry(childEntity);
-                    entry.State = EntityState.Added;
+                    if (entry.State != EntityState.Added)
+                    {
+                        entry.State = EntityState.Added;
+                    }
                 }
             }
 

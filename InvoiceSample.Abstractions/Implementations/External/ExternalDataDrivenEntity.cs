@@ -1,46 +1,51 @@
 ﻿using InvoiceSample.DataDrivenEntity.Aggregates;
 using InvoiceSample.DataDrivenEntity.Implementations.Helpers;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace InvoiceSample.DataDrivenEntity.Implementations
 {
     public abstract class ExternalDataDrivenEntity<TKey, TEntityData, TExternalData>
-        : IDataDrivenEntity<TKey, TEntityData, TExternalData>, IAggregateEntity<TKey, TEntityData>
+        : DataDrivenEntityBase<TKey>, IDataDrivenEntity<TKey, TEntityData, TExternalData>, IAggregateEntity<TKey, TEntityData>
         where TEntityData : IEntityData<TKey>
         where TKey : notnull
         where TExternalData : class
     {
-        private List<ChildEntry> _childEntries = [];
-        private List<ExternalChildEntry> _externalChildEntries = [];
-        private List<CollectionEntry> _collectionEntries = [];
-        private List<ExternalCollectionEntry> _externalCollectionEntries = [];
-        private HashSet<IDataDrivenEntityBase> _allEntities = new();
-        private IInitializationContext? _initializationContext;
-
-        public bool IsInitialized { get; private set; }
-        public bool IsNew { get; set; } = true;
-        protected abstract bool SelfInitialzed { get; }
-        public IEnumerable<IDataDrivenEntityBase> GetAllEntities() => _allEntities;
-
+        // These methods can remain as they are in derived classes
         public abstract TEntityData GetEntityData();
-        object IDataDrivenEntityBase.GetEntityData() => GetEntityData();
-
         public abstract TKey GetKey();
         protected abstract void SelfInitialize(TEntityData entityData, TExternalData externalData);
 
+        // Implement IDataDrivenEntityBase methods
+        protected override object GetEntityDataCore() => GetEntityData();
+        protected override object GetKeyCore() => GetKey();
+
         public void Initialize(TEntityData entityData, TExternalData externalData, IInitializationContext? context = null, bool isNew = false)
         {
-            SelfInitialize(entityData, externalData);
+            // Set IsNew flag
+            IsNew = isNew;
 
+            SelfInitialize(entityData, externalData);
             _initializationContext = context is null ? new InitializationContext() : context;
             if (_initializationContext.IsInitialized(this))
             {
                 return;
             }
 
+            // Add ourselves to our own collection
+            _allEntities.Add(this);
+
+            // Register with the context
             _initializationContext.Add(this);
 
+            // Subscribe to initialization events if we have relationship resolvers
+            if (_relationshipResolvers.Count > 0)
+            {
+                _initializationContext.SubscribeToInitializationEvents(ResolveRelationships);
+            }
+
             IsInitialized = InitializeAggregate(entityData, isNew, _initializationContext) && SelfInitialzed;
-            IsNew = isNew;
         }
 
         void IExternalDataDrivenEntity.Initialize(object entityData, object externalData, IInitializationContext? initializationContext, bool isNew)
@@ -52,127 +57,6 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
             else
             {
                 throw new InvalidCastException($"expecting types {typeof(TEntityData).Name} and {typeof(TExternalData).Name}");
-            }
-        }
-
-        object IDataDrivenEntityBase.GetKey() => GetKey();
-
-        private bool InitializeAggregate(TEntityData entityData, bool isNew, IInitializationContext context)
-        {
-            var initialized = true;
-            foreach (var childEntry in _childEntries)
-            {
-                var childData = childEntry.ChildDataSelector(entityData);
-                if (childEntry.Entity is not null)
-                {
-                    if (childData is null)
-                    {
-                        childEntry.RemoveChild(childEntry.Entity);
-                    }
-                    else
-                    {
-                        childEntry.Entity.Initialize(childData, context, isNew);
-                        AddEntities(childEntry.Entity);
-                        initialized &= childEntry.Entity.IsInitialized;
-                    }
-                }
-                else if (childData is not null)
-                {
-                    var newEntity = childEntry.ChildCreator(entityData);
-                    newEntity.Initialize(childData, context, isNew);
-                    AddEntities(newEntity);
-                    childEntry.SetChild(newEntity);
-                    initialized &= newEntity.IsInitialized;
-                }
-            }
-
-            foreach (var childEntry in _externalChildEntries)
-            {
-                var childData = childEntry.ChildDataSelector(entityData);
-                var externalData = childEntry.ExternalDataProvider(entityData);
-                if (childEntry.Entity is not null)
-                {
-                    if (childData is null)
-                    {
-                        childEntry.RemoveChild(childEntry.Entity);
-                    }
-                    else
-                    {
-                        childEntry.Entity.Initialize(entityData, externalData, context, isNew);
-                        AddEntities(childEntry.Entity);
-                        initialized &= childEntry.Entity.IsInitialized;
-                    }
-                }
-                else if (childData is not null)
-                {
-                    var newEntity = childEntry.ChildCreator(entityData);
-                    newEntity.Initialize(childData, externalData, context, isNew);
-                    childEntry.SetChild(newEntity);
-                    AddEntities(newEntity);
-                    initialized &= newEntity.IsInitialized;
-                }
-            }
-
-            foreach (var collectionEntry in _collectionEntries)
-            {
-                var collectionData = collectionEntry.ChildCollectionDataSelector(entityData);
-                var existingKeys = new List<object>();
-                foreach (var childEntryData in collectionData)
-                {
-                    var key = childEntryData.GetKey();
-                    existingKeys.Add(key);
-                    var childEntry = collectionEntry.Collection.FirstOrDefault(e => e.GetKey().Equals(key));
-                    if (childEntry is null)
-                    {
-                        childEntry = collectionEntry.ChildCreator(entityData, childEntryData);
-                        collectionEntry.Collection.Add(childEntry);
-                    }
-                    childEntry.Initialize(childEntryData, context, isNew);
-                    AddEntities(childEntry);
-                    initialized &= childEntry.IsInitialized;
-                }
-
-                foreach (var entryToRemove in collectionEntry.Collection.Where(e => !existingKeys.Contains(e.GetKey())).ToArray())
-                {
-                    collectionEntry.Collection.Remove(entryToRemove);
-                }
-            }
-
-            foreach (var collectionEntry in _externalCollectionEntries)
-            {
-                var collectionData = collectionEntry.ChildCollectionDataSelector(entityData);
-                var externalData = collectionEntry.ExternalDataProvider(entityData);
-                var existingKeys = new List<object>();
-                foreach (var childEntryData in collectionData)
-                {
-                    var key = childEntryData.GetKey();
-                    existingKeys.Add(key);
-                    var childEntry = collectionEntry.Collection.FirstOrDefault(e => e.GetKey().Equals(key));
-                    if (childEntry is null)
-                    {
-                        childEntry = collectionEntry.ChildCreator(entityData, childEntryData);
-                        collectionEntry.Collection.Add(childEntry);
-                    }
-                    childEntry.Initialize(childEntryData, externalData, context, isNew);
-                    AddEntities(childEntry);
-                    initialized &= childEntry.IsInitialized;
-                }
-
-                foreach (var entryToRemove in collectionEntry.Collection.Where(e => !existingKeys.Contains(e.GetKey())).ToArray())
-                {
-                    collectionEntry.Collection.Remove(entryToRemove);
-                }
-            }
-
-            return initialized;
-        }
-
-        private void AddEntities(IDataDrivenEntityBase entity)
-        {
-            _allEntities.Add(entity);
-            foreach (var child in entity.GetAllEntities())
-            {
-                _allEntities.Add(child);
             }
         }
 
@@ -212,6 +96,19 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                 },
                 ChildCreator = (p) => childCreator((TEntityData)p),
                 SetChild = setChild,
+            });
+
+            // Register relationship resolver for this child
+            RegisterRelationshipResolver(evt => {
+                if (child != null && evt.Entity is IDataDrivenEntity<TChildKey, TChildData> entityToCheck &&
+                    Object.Equals(child.GetKey(), entityToCheck.GetKey()))
+                {
+                    // Update our reference only if the entity is different
+                    if (!ReferenceEquals(child, entityToCheck))
+                    {
+                        setChild((IDataDrivenEntity)evt.Entity);
+                    }
+                }
             });
         }
 
@@ -265,6 +162,19 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                 },
                 SetChild = setChild,
             });
+
+            // Register relationship resolver for this external child
+            RegisterRelationshipResolver(evt => {
+                if (child != null && evt.Entity is IDataDrivenEntity<TChildKey, TChildData, TChildExternalData> entityToCheck &&
+                    Object.Equals(child.GetKey(), entityToCheck.GetKey()))
+                {
+                    // Update our reference only if the entity is different
+                    if (!ReferenceEquals(child, entityToCheck))
+                    {
+                        setChild((IExternalDataDrivenEntity)evt.Entity);
+                    }
+                }
+            });
         }
 
         public void RegisterChildCollection<TChild, TChildKey, TChildData>(
@@ -290,6 +200,30 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                         throw new InvalidCastException($"Expected parentData to be of type {typeof(TEntityData)}, but got {parentData.GetType()}.");
                     }
                 },
+            });
+
+            // Register relationship resolver for this collection
+            RegisterRelationshipResolver(evt => {
+                if (evt.Entity is TChild childEntity)
+                {
+                    bool alreadyContains = collection.Any(e => Object.Equals(e.GetKey(), childEntity.GetKey()));
+
+                    // If it's already in the collection and it's the same instance, do nothing
+                    if (alreadyContains && collection.Contains(childEntity))
+                        return;
+
+                    // If it's already in the collection but a different instance with the same key, replace it
+                    if (alreadyContains)
+                    {
+                        var existingEntity = collection.First(e => Object.Equals(e.GetKey(), childEntity.GetKey()));
+                        if (!ReferenceEquals(existingEntity, childEntity))
+                        {
+                            collection.Remove(existingEntity);
+                            collection.Add(childEntity);
+                            AddEntities(childEntity);
+                        }
+                    }
+                }
             });
         }
 
@@ -330,6 +264,35 @@ namespace InvoiceSample.DataDrivenEntity.Implementations
                     }
                 }
             });
+
+            // Register relationship resolver for this external collection
+            RegisterRelationshipResolver(evt => {
+                if (evt.Entity is TChild childEntity)
+                {
+                    bool alreadyContains = collection.Any(e => Object.Equals(e.GetKey(), childEntity.GetKey()));
+
+                    // If it's already in the collection and it's the same instance, do nothing
+                    if (alreadyContains && collection.Contains(childEntity))
+                        return;
+
+                    // If it's already in the collection but a different instance with the same key, replace it
+                    if (alreadyContains)
+                    {
+                        var existingEntity = collection.First(e => Object.Equals(e.GetKey(), childEntity.GetKey()));
+                        if (!ReferenceEquals(existingEntity, childEntity))
+                        {
+                            collection.Remove(existingEntity);
+                            collection.Add(childEntity);
+                            AddEntities(childEntity);
+                        }
+                    }
+                }
+            });
+        }
+
+        private bool InitializeAggregate(TEntityData entityData, bool isNew, IInitializationContext context)
+        {
+            return InitializeAggregateBase(entityData, isNew, context);
         }
     }
 }

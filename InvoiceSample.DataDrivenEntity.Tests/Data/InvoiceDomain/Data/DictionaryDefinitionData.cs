@@ -7,7 +7,7 @@
         public DateTime Created { get; set; }
         public int CreatedBy { get; set; }
         public List<DictionaryValueData> Values { get; set; } = [];
-
+        public bool IsNew { get; set; }
         IEnumerable<IDictionaryValueData> IDictionaryDefinitionData.Values => Values;
 
         public bool Equals(IDictionaryDefinitionData? other) => other is not null && Id == other.Id ;

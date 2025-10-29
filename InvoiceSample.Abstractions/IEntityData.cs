@@ -9,6 +9,7 @@ namespace InvoiceSample.DataDrivenEntity
     public interface IEntityData
     {
         object GetKey();
+        bool IsNew { get; }
     }
 
     public interface IEntityData<TKey> : IEntityData
