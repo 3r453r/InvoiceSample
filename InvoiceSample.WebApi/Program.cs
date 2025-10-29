@@ -62,6 +62,17 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseMigrations();
+if (app.Environment.IsEnvironment("IntegrationTesting"))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<InvoiceSample.Persistence.InvoiceSampleDbContext>();
+    db.Database.EnsureCreated();
+}
+else
+{
+    app.UseMigrations();
+}
 
 app.Run();
+
+public partial class Program { }
