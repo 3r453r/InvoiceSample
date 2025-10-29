@@ -17,9 +17,10 @@ namespace InvoiceSample.WebApi.Controllers
 
         [HttpGet]
         [Route("{invoiceNumber}")]
-        public async Task<IActionResult> GetInvoice([FromRoute] string invoiceNumber) 
-        { 
-            var invoiceData = await _invoiceService.GetInvoice(invoiceNumber);
+        public async Task<IActionResult> GetInvoice([FromRoute] string invoiceNumber)
+        {
+            var normalizedNumber = Uri.UnescapeDataString(invoiceNumber);
+            var invoiceData = await _invoiceService.GetInvoice(normalizedNumber);
             return invoiceData is null ? NotFound() : Ok(invoiceData);
         }
 

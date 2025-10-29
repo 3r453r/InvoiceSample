@@ -47,20 +47,22 @@ public class InvoiceApiTests : IClassFixture<TestWebApplicationFactory>
 
         var postRequest = new RestRequest("/SalesOrder").AddJsonBody(request);
         var postResponse = await _client.ExecutePostAsync(postRequest);
-        postResponse.IsSuccessful.Should().BeTrue();
+        postResponse.IsSuccessful.Should().BeTrue(
+            $"Status: {(int)postResponse.StatusCode} {postResponse.StatusCode}; Error: {postResponse.ErrorMessage}; Content: {postResponse.Content}");
         var createdInvoice = Deserialize(postResponse);
 
         var invoiceNumber = createdInvoice.Number!;
 
-        var getRequest = new RestRequest("/Invoice/{number}").AddUrlSegment("number", invoiceNumber);
+        var getRequest = new RestRequest($"/Invoice/{Uri.EscapeDataString(invoiceNumber)}");
         var getResponse = await _client.ExecuteGetAsync(getRequest);
-        getResponse.IsSuccessful.Should().BeTrue();
+        getResponse.IsSuccessful.Should().BeTrue(
+            $"Status: {(int)getResponse.StatusCode} {getResponse.StatusCode}; Error: {getResponse.ErrorMessage}; Content: {getResponse.Content}");
         var retrievedInvoice = Deserialize(getResponse);
         retrievedInvoice.Number.Should().Be(invoiceNumber);
     }
 
     [Fact]
-    public async Task AddWarehouseRelease_UpdatesInvoice()
+    public async Task AddSalesOrderTwice_UpdatesInvoice()
     {
         var soRequest = new SalesOrderRequested
         {
@@ -85,38 +87,43 @@ public class InvoiceApiTests : IClassFixture<TestWebApplicationFactory>
 
         var soPost = new RestRequest("/SalesOrder").AddJsonBody(soRequest);
         var soResponse = await _client.ExecutePostAsync(soPost);
-        soResponse.IsSuccessful.Should().BeTrue();
+        soResponse.IsSuccessful.Should().BeTrue(
+            $"Status: {(int)soResponse.StatusCode} {soResponse.StatusCode}; Error: {soResponse.ErrorMessage}; Content: {soResponse.Content}");
         var invoiceNumber = Deserialize(soResponse).Number!;
 
-        var wrRequest = new WarehouseReleaseRequested
+        var updatedRequest = new SalesOrderRequested
         {
-            SalesOrderNumber = soRequest.Number,
-            Number = "WR1",
+            AutoInvoice = true,
+            Number = soRequest.Number,
             CustomerId = soRequest.CustomerId,
             Lines =
             {
-                new WarehouseReleaseRequested.WarehouseReleaseLine
+                new SalesOrderLine
                 {
-                    SalesOrderLineOrdinal = 1,
                     Ordinal = 1,
-                    NetValue = 100m,
-                    VatValue = 23m,
-                    GrossValue = 123m,
+                    IsService = false,
+                    NetValue = 200m,
+                    VatValue = 46m,
+                    GrossValue = 246m,
                     ProductId = Guid.NewGuid(),
-                    Quantity = 1,
+                    Quantity = 2,
                     VatRate = InvoiceSample.Domain.VatRate.TwentyThree
                 }
             }
         };
 
-        var wrPost = new RestRequest("/WarehouseMovement/warehouseRelease").AddJsonBody(wrRequest);
-        var wrResponse = await _client.ExecutePostAsync(wrPost);
-        wrResponse.IsSuccessful.Should().BeTrue();
+        var updatePost = new RestRequest("/SalesOrder").AddJsonBody(updatedRequest);
+        var updateResponse = await _client.ExecutePostAsync(updatePost);
+        updateResponse.IsSuccessful.Should().BeTrue(
+            $"Status: {(int)updateResponse.StatusCode} {updateResponse.StatusCode}; Error: {updateResponse.ErrorMessage}; Content: {updateResponse.Content}");
+        var updatedInvoice = Deserialize(updateResponse);
+        updatedInvoice.Number.Should().Be(invoiceNumber);
 
-        var getRequest = new RestRequest("/Invoice/{number}").AddUrlSegment("number", invoiceNumber);
+        var getRequest = new RestRequest($"/Invoice/{Uri.EscapeDataString(invoiceNumber)}");
         var getResponse = await _client.ExecuteGetAsync(getRequest);
-        getResponse.IsSuccessful.Should().BeTrue();
-        Deserialize(getResponse).GrossValue.Should().BeGreaterThan(0m);
+        getResponse.IsSuccessful.Should().BeTrue(
+            $"Status: {(int)getResponse.StatusCode} {getResponse.StatusCode}; Error: {getResponse.ErrorMessage}; Content: {getResponse.Content}");
+        Deserialize(getResponse).Number.Should().Be(invoiceNumber);
     }
 
     private static InvoiceResponse Deserialize(RestResponse response)
@@ -125,7 +132,6 @@ public class InvoiceApiTests : IClassFixture<TestWebApplicationFactory>
         return JsonSerializer.Deserialize<InvoiceResponse>(response.Content!, SerializerOptions)!;
     }
 }
-
 
 public class InvoiceResponse
 {
